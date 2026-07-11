@@ -1,0 +1,45 @@
+import type { Team, Score } from '../../lib/types'
+
+interface Props {
+  teams: Team[]
+  scores: Score[]
+  bookName: string
+  onFinishBook: () => void
+}
+
+const TEAM_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444']
+
+export function TeamSidebar({ teams, scores, bookName, onFinishBook }: Props) {
+  return (
+    <div className="w-52 bg-[#1e1e2e] flex flex-col gap-3 p-4 shrink-0">
+      <div>
+        <p className="text-[10px] text-gray-500 uppercase tracking-widest">Libro actual</p>
+        <p className="text-white font-semibold mt-1 text-sm">{bookName}</p>
+      </div>
+
+      <div className="h-px bg-gray-700" />
+
+      <p className="text-[10px] text-gray-500 uppercase tracking-widest">Equipos</p>
+
+      {teams.map((team, i) => {
+        const total = scores.filter(s => s.teamId === team.id).reduce((sum, s) => sum + s.correct, 0)
+        const color = TEAM_COLORS[i % TEAM_COLORS.length]
+        return (
+          <div key={team.id} className="bg-[#2a2a3e] rounded-lg p-3" style={{ borderLeft: `3px solid ${color}` }}>
+            <p className="text-white text-sm font-semibold">{team.name}</p>
+            <p className="text-xs mt-1" style={{ color }}>Puntaje: <strong>{total}</strong></p>
+          </div>
+        )
+      })}
+
+      <div className="flex-1" />
+
+      <button
+        onClick={onFinishBook}
+        className="bg-red-700 hover:bg-red-600 text-white rounded-lg py-2 text-sm font-medium transition-colors"
+      >
+        Finalizar libro
+      </button>
+    </div>
+  )
+}
