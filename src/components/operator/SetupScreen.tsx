@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import type { Team, Participant, Question, TeamsImport } from '../../lib/types'
 
 interface Props {
-  onComplete: (data: { bookName: string; teams: Team[]; questions: Question[] }) => void
+  onComplete: (data: { bookName: string; chapters: string; teams: Team[]; questions: Question[] }) => void
 }
 
 function generateId(): string {
@@ -24,6 +24,7 @@ function importTeams(raw: TeamsImport): Team[] {
 
 export function SetupScreen({ onComplete }: Props) {
   const [bookName, setBookName] = useState('')
+  const [chapters, setChapters] = useState('')
   const [questions, setQuestions] = useState<Question[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [error, setError] = useState('')
@@ -84,8 +85,8 @@ export function SetupScreen({ onComplete }: Props) {
     ))
   }
 
-  const canStart = bookName.trim().length > 0 && questions.length > 0 &&
-    teams.length > 0 && teams.every(t => t.members.length > 0)
+  const canStart = bookName.trim().length > 0 && chapters.trim().length > 0 &&
+    questions.length > 0 && teams.length > 0 && teams.every(t => t.members.length > 0)
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8 overflow-y-auto">
@@ -105,6 +106,13 @@ export function SetupScreen({ onComplete }: Props) {
             value={bookName}
             onChange={e => setBookName(e.target.value)}
             placeholder="ej: Génesis"
+            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500"
+          />
+          <label className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Capítulos de hoy</label>
+          <input
+            value={chapters}
+            onChange={e => setChapters(e.target.value)}
+            placeholder="ej: 1-3"
             className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500"
           />
         </section>
@@ -191,7 +199,7 @@ export function SetupScreen({ onComplete }: Props) {
         </section>
 
         <button
-          onClick={() => onComplete({ bookName: bookName.trim(), teams, questions })}
+          onClick={() => onComplete({ bookName: bookName.trim(), chapters: chapters.trim(), teams, questions })}
           disabled={!canStart}
           className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold py-4 rounded-xl text-lg transition-colors"
         >

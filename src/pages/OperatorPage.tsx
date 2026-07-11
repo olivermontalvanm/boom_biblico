@@ -16,6 +16,7 @@ type Phase = 'setup' | 'idle' | 'question' | 'revealed'
 interface State {
   phase: Phase
   bookName: string
+  chapters: string
   questions: Question[]
   teams: Team[]
   turns: Turn[]
@@ -27,7 +28,7 @@ interface State {
 }
 
 type Action =
-  | { type: 'SETUP_COMPLETE'; bookName: string; teams: Team[]; questions: Question[] }
+  | { type: 'SETUP_COMPLETE'; bookName: string; chapters: string; teams: Team[]; questions: Question[] }
   | { type: 'START_TURN'; team: Team; participant: Participant; question: Question }
   | { type: 'CHANGE_PARTICIPANT'; participant: Participant }
   | { type: 'SELECT_OPTION'; index: number }
@@ -39,13 +40,13 @@ function init(): State {
   const session = getSession()
   if (!session?.isActive) {
     return {
-      phase: 'setup', bookName: '', questions: [], teams: [],
+      phase: 'setup', bookName: '', chapters: '', questions: [], teams: [],
       turns: [], scores: [], currentTeam: null,
       currentParticipant: null, currentQuestion: null, selectedOptionIndex: null,
     }
   }
   return {
-    phase: 'idle', bookName: session.bookName, questions: [],
+    phase: 'idle', bookName: session.bookName, chapters: session.chapters, questions: [],
     teams: getTeams(), turns: getTurns(), scores: getScores(),
     currentTeam: null, currentParticipant: null, currentQuestion: null, selectedOptionIndex: null,
   }
@@ -54,7 +55,7 @@ function init(): State {
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SETUP_COMPLETE':
-      return { ...state, phase: 'idle', bookName: action.bookName, teams: action.teams, questions: action.questions }
+      return { ...state, phase: 'idle', bookName: action.bookName, chapters: action.chapters, teams: action.teams, questions: action.questions }
     case 'START_TURN':
       return { ...state, phase: 'question', currentTeam: action.team, currentParticipant: action.participant, currentQuestion: action.question, selectedOptionIndex: null }
     case 'CHANGE_PARTICIPANT':
@@ -67,7 +68,7 @@ function reducer(state: State, action: Action): State {
       return { ...state, phase: 'idle', currentTeam: null, currentParticipant: null, currentQuestion: null, selectedOptionIndex: null }
     case 'FINISH_BOOK':
       return {
-        phase: 'setup', bookName: '', questions: [], teams: [], turns: [], scores: [],
+        phase: 'setup', bookName: '', chapters: '', questions: [], teams: [], turns: [], scores: [],
         currentTeam: null, currentParticipant: null, currentQuestion: null, selectedOptionIndex: null,
       }
     default:
@@ -88,8 +89,8 @@ export function OperatorPage() {
     }
   }, [])
 
-  function handleSetupComplete(data: { bookName: string; teams: Team[]; questions: Question[] }) {
-    saveSession({ bookName: data.bookName, startDate: new Date().toISOString(), isActive: true })
+  function handleSetupComplete(data: { bookName: string; chapters: string; teams: Team[]; questions: Question[] }) {
+    saveSession({ bookName: data.bookName, chapters: data.chapters, startDate: new Date().toISOString(), isActive: true })
     saveTeams(data.teams)
     dispatch({ type: 'SETUP_COMPLETE', ...data })
     senderRef.current?.send({ type: 'IDLE' })
@@ -161,6 +162,7 @@ export function OperatorPage() {
         teams={state.teams}
         scores={state.scores}
         bookName={state.bookName}
+        chapters={state.chapters}
         lastTeamId={lastTeamId}
         onFinishBook={handleFinishBook}
       />
@@ -171,6 +173,7 @@ export function OperatorPage() {
             {state.questions.length === 0 ? (
               <div className="flex flex-col items-center gap-4 bg-gray-800 rounded-xl p-8 max-w-sm w-full text-center">
                 <p className="text-yellow-400 font-semibold">Sesión recuperada: {state.bookName}</p>
+                <p className="text-gray-300 text-sm">Capítulos: {state.chapters}</p>
                 <p className="text-gray-400 text-sm">Carga el archivo de preguntas para continuar</p>
                 <label className="bg-indigo-600 hover:bg-indigo-700 cursor-pointer text-white font-semibold px-6 py-3 rounded-xl transition-colors">
                   📄 Cargar preguntas

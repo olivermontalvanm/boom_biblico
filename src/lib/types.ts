@@ -1,5 +1,6 @@
 export interface BookSession {
   bookName: string;
+  chapters: string;
   startDate: string;
   isActive: boolean;
 }
