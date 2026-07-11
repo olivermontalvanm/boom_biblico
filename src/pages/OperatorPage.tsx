@@ -74,18 +74,22 @@ function reducer(state: State, action: Action): State {
 
 export function OperatorPage() {
   const [state, dispatch] = useReducer(reducer, undefined, init)
-  const senderRef = useRef(createSender())
+  const senderRef = useRef<ReturnType<typeof createSender> | null>(null)
 
   useEffect(() => {
-    const sender = senderRef.current
-    return () => sender.close()
+    const sender = createSender()
+    senderRef.current = sender
+    return () => {
+      sender.close()
+      senderRef.current = null
+    }
   }, [])
 
   function handleSetupComplete(data: { bookName: string; teams: Team[]; questions: Question[] }) {
     saveSession({ bookName: data.bookName, startDate: new Date().toISOString(), isActive: true })
     saveTeams(data.teams)
     dispatch({ type: 'SETUP_COMPLETE', ...data })
-    senderRef.current.send({ type: 'IDLE' })
+    senderRef.current?.send({ type: 'IDLE' })
   }
 
   function handleTeamSelect(team: Team) {
@@ -96,7 +100,7 @@ export function OperatorPage() {
       return
     }
     dispatch({ type: 'START_TURN', team, participant, question })
-    senderRef.current.send({ type: 'SHOW_QUESTION', participant, team, question })
+    senderRef.current?.send({ type: 'SHOW_QUESTION', participant, team, question })
   }
 
   function handleConfirmAnswer() {
@@ -116,18 +120,18 @@ export function OperatorPage() {
     addTurn(turn)
     const newScores = updateScore(state.currentParticipant.id, state.currentTeam.id, correct)
     dispatch({ type: 'CONFIRM_ANSWER', turn, scores: newScores })
-    senderRef.current.send({ type: 'REVEAL_ANSWER', selectedOptionIndex: state.selectedOptionIndex, correct, correctOptionIndex })
-    senderRef.current.send({ type: 'UPDATE_SCORES', scores: newScores })
+    senderRef.current?.send({ type: 'REVEAL_ANSWER', selectedOptionIndex: state.selectedOptionIndex, correct, correctOptionIndex })
+    senderRef.current?.send({ type: 'UPDATE_SCORES', scores: newScores })
   }
 
   function handleNextTurn() {
     dispatch({ type: 'NEXT_TURN' })
-    senderRef.current.send({ type: 'IDLE' })
+    senderRef.current?.send({ type: 'IDLE' })
   }
 
   function handleFinishBook() {
     if (!confirm('¿Finalizar el libro actual? Esto borrará todos los datos de esta sesión.')) return
-    senderRef.current.send({ type: 'SHOW_FINAL_SCORES', scores: state.scores, teams: state.teams })
+    senderRef.current?.send({ type: 'SHOW_FINAL_SCORES', scores: state.scores, teams: state.teams })
     clearAll()
     dispatch({ type: 'FINISH_BOOK' })
   }
