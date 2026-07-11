@@ -17,7 +17,7 @@ export interface Team {
   members: Participant[];
 }
 
-export interface Option {
+export interface QuestionOption {
   text: string;
   isCorrect: boolean;
 }
@@ -25,7 +25,7 @@ export interface Option {
 export interface Question {
   id: string;
   question: string;
-  options: Option[];
+  options: QuestionOption[];
 }
 
 export interface Score {
