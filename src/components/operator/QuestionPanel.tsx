@@ -7,17 +7,19 @@ interface Props {
   questionNumber: number
   selectedOptionIndex: number | null
   revealed: boolean
+  canChangeParticipant: boolean
   onSelectOption: (index: number) => void
   onConfirm: () => void
   onNextTurn: () => void
+  onChangeParticipant: () => void
 }
 
 const LABELS = ['A', 'B', 'C', 'D']
 
 export function QuestionPanel({
   participant, team, question, questionNumber,
-  selectedOptionIndex, revealed,
-  onSelectOption, onConfirm, onNextTurn,
+  selectedOptionIndex, revealed, canChangeParticipant,
+  onSelectOption, onConfirm, onNextTurn, onChangeParticipant,
 }: Props) {
   return (
     <div className="flex-1 flex flex-col gap-4 p-6 bg-[#13131f] overflow-y-auto">
@@ -68,13 +70,24 @@ export function QuestionPanel({
 
       <div className="flex gap-3">
         {!revealed ? (
-          <button
-            onClick={onConfirm}
-            disabled={selectedOptionIndex === null}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold py-3 rounded-xl transition-colors"
-          >
-            ✓ Confirmar respuesta
-          </button>
+          <>
+            <button
+              onClick={onConfirm}
+              disabled={selectedOptionIndex === null}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold py-3 rounded-xl transition-colors"
+            >
+              ✓ Confirmar respuesta
+            </button>
+            {canChangeParticipant && (
+              <button
+                onClick={onChangeParticipant}
+                className="bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold px-4 py-3 rounded-xl transition-colors text-sm"
+                title="Elegir otro participante del mismo equipo"
+              >
+                Cambiar persona
+              </button>
+            )}
+          </>
         ) : (
           <button
             onClick={onNextTurn}

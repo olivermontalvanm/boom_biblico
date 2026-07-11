@@ -29,6 +29,7 @@ interface State {
 type Action =
   | { type: 'SETUP_COMPLETE'; bookName: string; teams: Team[]; questions: Question[] }
   | { type: 'START_TURN'; team: Team; participant: Participant; question: Question }
+  | { type: 'CHANGE_PARTICIPANT'; participant: Participant }
   | { type: 'SELECT_OPTION'; index: number }
   | { type: 'CONFIRM_ANSWER'; turn: Turn; scores: Score[] }
   | { type: 'NEXT_TURN' }
@@ -56,6 +57,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, phase: 'idle', bookName: action.bookName, teams: action.teams, questions: action.questions }
     case 'START_TURN':
       return { ...state, phase: 'question', currentTeam: action.team, currentParticipant: action.participant, currentQuestion: action.question, selectedOptionIndex: null }
+    case 'CHANGE_PARTICIPANT':
+      return { ...state, currentParticipant: action.participant, selectedOptionIndex: null }
     case 'SELECT_OPTION':
       return { ...state, selectedOptionIndex: action.index }
     case 'CONFIRM_ANSWER':
@@ -122,6 +125,15 @@ export function OperatorPage() {
     dispatch({ type: 'CONFIRM_ANSWER', turn, scores: newScores })
     senderRef.current?.send({ type: 'REVEAL_ANSWER', selectedOptionIndex: state.selectedOptionIndex, correct, correctOptionIndex })
     senderRef.current?.send({ type: 'UPDATE_SCORES', scores: newScores })
+  }
+
+  function handleChangeParticipant() {
+    if (!state.currentTeam || !state.currentParticipant || !state.currentQuestion) return
+    const others = state.currentTeam.members.filter(m => m.id !== state.currentParticipant!.id)
+    if (others.length === 0) return
+    const newParticipant = pickParticipant(others, state.turns)
+    dispatch({ type: 'CHANGE_PARTICIPANT', participant: newParticipant })
+    senderRef.current?.send({ type: 'SHOW_QUESTION', participant: newParticipant, team: state.currentTeam, question: state.currentQuestion })
   }
 
   function handleNextTurn() {
@@ -201,9 +213,11 @@ export function OperatorPage() {
             questionNumber={state.turns.length + (state.phase === 'question' ? 1 : 0)}
             selectedOptionIndex={state.selectedOptionIndex}
             revealed={state.phase === 'revealed'}
+            canChangeParticipant={state.currentTeam.members.length > 1}
             onSelectOption={index => dispatch({ type: 'SELECT_OPTION', index })}
             onConfirm={handleConfirmAnswer}
             onNextTurn={handleNextTurn}
+            onChangeParticipant={handleChangeParticipant}
           />
         )}
       </div>
