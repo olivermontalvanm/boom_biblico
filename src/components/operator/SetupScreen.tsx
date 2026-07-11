@@ -1,12 +1,9 @@
 import { useState, useRef } from 'react'
 import type { Team, Participant, Question, TeamsImport } from '../../lib/types'
+import { generateId } from '../../lib/editor-utils'
 
 interface Props {
   onComplete: (data: { bookName: string; todayChapters: number[]; teams: Team[]; questions: Question[] }) => void
-}
-
-function generateId(): string {
-  return Math.random().toString(36).slice(2, 10)
 }
 
 function importTeams(raw: TeamsImport): Team[] {

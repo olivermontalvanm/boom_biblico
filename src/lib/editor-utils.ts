@@ -7,8 +7,9 @@ export function generateId(): string {
 }
 
 export function validateQuestion(q: Question): boolean {
+  const questionText = q.question.trim()
   return (
-    q.question.trim().length > 0 &&
+    questionText.length > 0 &&
     q.chapter >= 1 &&
     q.options.length >= 2 &&
     q.options.length <= 5 &&
@@ -36,7 +37,9 @@ export function loadEditorDraft(): Question[] | null {
   const raw = localStorage.getItem(EDITOR_KEY)
   if (!raw) return null
   try {
-    return JSON.parse(raw) as Question[]
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return null
+    return parsed as Question[]
   } catch {
     return null
   }

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { validateQuestion, groupByChapter, saveEditorDraft, loadEditorDraft } from './editor-utils'
+import { generateId, validateQuestion, groupByChapter, saveEditorDraft, loadEditorDraft } from './editor-utils'
 import type { Question } from './types'
 
 const validQ: Question = {
@@ -13,6 +13,22 @@ const validQ: Question = {
 }
 
 beforeEach(() => localStorage.clear())
+
+describe('generateId', () => {
+  it('returns a non-empty string', () => {
+    expect(generateId()).toBeTruthy()
+  })
+  it('returns strings of consistent length', () => {
+    const id1 = generateId()
+    const id2 = generateId()
+    expect(id1.length).toBeGreaterThan(0)
+    expect(id1.length).toBe(id2.length)
+  })
+  it('returns different values on repeated calls', () => {
+    const ids = new Set(Array.from({ length: 10 }, () => generateId()))
+    expect(ids.size).toBe(10)
+  })
+})
 
 describe('validateQuestion', () => {
   it('returns true for a valid question', () => {
