@@ -153,6 +153,7 @@ export function OperatorPage() {
   }
 
   const displayParticipants = state.currentTeam?.members ?? state.teams.flatMap(t => t.members)
+  const lastTeamId = state.turns.at(-1)?.teamId ?? null
 
   return (
     <div className="h-screen bg-[#13131f] text-white flex overflow-hidden">
@@ -160,6 +161,7 @@ export function OperatorPage() {
         teams={state.teams}
         scores={state.scores}
         bookName={state.bookName}
+        lastTeamId={lastTeamId}
         onFinishBook={handleFinishBook}
       />
 
@@ -193,9 +195,14 @@ export function OperatorPage() {
                     <button
                       key={team.id}
                       onClick={() => handleTeamSelect(team)}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-colors"
+                      className="relative bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-colors"
                     >
                       {team.name}
+                      {team.id === lastTeamId && (
+                        <span className="absolute -top-2 -right-2 text-[10px] bg-gray-500 text-white rounded-full px-2 py-0.5">
+                          último
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>

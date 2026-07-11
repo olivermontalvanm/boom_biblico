@@ -4,12 +4,13 @@ interface Props {
   teams: Team[]
   scores: Score[]
   bookName: string
+  lastTeamId: string | null
   onFinishBook: () => void
 }
 
 const TEAM_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444']
 
-export function TeamSidebar({ teams, scores, bookName, onFinishBook }: Props) {
+export function TeamSidebar({ teams, scores, bookName, lastTeamId, onFinishBook }: Props) {
   return (
     <div className="w-52 bg-[#1e1e2e] flex flex-col gap-3 p-4 shrink-0">
       <div>
@@ -24,9 +25,15 @@ export function TeamSidebar({ teams, scores, bookName, onFinishBook }: Props) {
       {teams.map((team, i) => {
         const total = scores.filter(s => s.teamId === team.id).reduce((sum, s) => sum + s.correct, 0)
         const color = TEAM_COLORS[i % TEAM_COLORS.length]
+        const isLast = team.id === lastTeamId
         return (
           <div key={team.id} className="bg-[#2a2a3e] rounded-lg p-3" style={{ borderLeft: `3px solid ${color}` }}>
-            <p className="text-white text-sm font-semibold">{team.name}</p>
+            <div className="flex items-center justify-between gap-1">
+              <p className="text-white text-sm font-semibold">{team.name}</p>
+              {isLast && (
+                <span className="text-[9px] bg-gray-600 text-gray-300 rounded px-1.5 py-0.5 shrink-0">último</span>
+              )}
+            </div>
             <p className="text-xs mt-1" style={{ color }}>Puntaje: <strong>{total}</strong></p>
           </div>
         )
