@@ -8,7 +8,7 @@ import {
 } from './storage'
 import type { BookSession, Team, Participant, Turn } from './types'
 
-const session: BookSession = { bookName: 'Génesis', startDate: '2026-07-10', isActive: true }
+const session: BookSession = { bookName: 'Génesis', todayChapters: [1, 2, 3], startDate: '2026-07-10', isActive: true }
 
 const participant: Participant = { id: 'p1', name: 'María', teamId: 't1' }
 const team: Team = { id: 't1', name: 'Alfa', captainId: 'p1', members: [participant] }

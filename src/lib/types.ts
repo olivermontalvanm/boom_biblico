@@ -1,6 +1,6 @@
 export interface BookSession {
   bookName: string;
-  chapters: string;
+  todayChapters: number[];
   startDate: string;
   isActive: boolean;
 }
@@ -25,6 +25,7 @@ export interface QuestionOption {
 
 export interface Question {
   id: string;
+  chapter: number;
   question: string;
   options: QuestionOption[];
 }

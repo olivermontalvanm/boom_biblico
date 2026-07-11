@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import type { Team, Participant, Question, TeamsImport } from '../../lib/types'
 
 interface Props {
-  onComplete: (data: { bookName: string; chapters: string; teams: Team[]; questions: Question[] }) => void
+  onComplete: (data: { bookName: string; todayChapters: number[]; teams: Team[]; questions: Question[] }) => void
 }
 
 function generateId(): string {
@@ -22,10 +22,14 @@ function importTeams(raw: TeamsImport): Team[] {
   })
 }
 
+function availableChapters(questions: Question[]): number[] {
+  return [...new Set(questions.map(q => q.chapter))].sort((a, b) => a - b)
+}
+
 export function SetupScreen({ onComplete }: Props) {
   const [bookName, setBookName] = useState('')
-  const [chapters, setChapters] = useState('')
   const [questions, setQuestions] = useState<Question[]>([])
+  const [todayChapters, setTodayChapters] = useState<number[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [error, setError] = useState('')
 
@@ -36,7 +40,9 @@ export function SetupScreen({ onComplete }: Props) {
     const file = e.target.files?.[0]
     if (!file) return
     try {
-      setQuestions(JSON.parse(await file.text()) as Question[])
+      const qs = JSON.parse(await file.text()) as Question[]
+      setQuestions(qs)
+      setTodayChapters([])
       setError('')
     } catch {
       setError('Error al leer el archivo de preguntas. Verifica que sea un JSON válido.')
@@ -52,6 +58,12 @@ export function SetupScreen({ onComplete }: Props) {
     } catch {
       setError('Error al leer el archivo de equipos. Verifica que sea un JSON válido.')
     }
+  }
+
+  function toggleChapter(ch: number) {
+    setTodayChapters(prev =>
+      prev.includes(ch) ? prev.filter(c => c !== ch) : [...prev, ch].sort((a, b) => a - b)
+    )
   }
 
   function addTeam() {
@@ -85,7 +97,8 @@ export function SetupScreen({ onComplete }: Props) {
     ))
   }
 
-  const canStart = bookName.trim().length > 0 && chapters.trim().length > 0 &&
+  const chapters = availableChapters(questions)
+  const canStart = bookName.trim().length > 0 && todayChapters.length > 0 &&
     questions.length > 0 && teams.length > 0 && teams.every(t => t.members.length > 0)
 
   return (
@@ -108,13 +121,6 @@ export function SetupScreen({ onComplete }: Props) {
             placeholder="ej: Génesis"
             className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500"
           />
-          <label className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Capítulos de hoy</label>
-          <input
-            value={chapters}
-            onChange={e => setChapters(e.target.value)}
-            placeholder="ej: 1-3"
-            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500"
-          />
         </section>
 
         <section className="flex flex-col gap-3">
@@ -131,6 +137,30 @@ export function SetupScreen({ onComplete }: Props) {
               <span className="text-green-400 text-sm">✓ {questions.length} preguntas cargadas</span>
             )}
           </div>
+
+          {chapters.length > 0 && (
+            <div className="flex flex-col gap-2 mt-1">
+              <p className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Capítulos de hoy</p>
+              <div className="flex flex-wrap gap-2">
+                {chapters.map(ch => (
+                  <button
+                    key={ch}
+                    onClick={() => toggleChapter(ch)}
+                    className={`w-10 h-10 rounded-lg text-sm font-bold transition-colors ${
+                      todayChapters.includes(ch)
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                    }`}
+                  >
+                    {ch}
+                  </button>
+                ))}
+              </div>
+              {todayChapters.length === 0 && (
+                <p className="text-yellow-500 text-xs">Selecciona al menos un capítulo</p>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="flex flex-col gap-4">
@@ -199,7 +229,7 @@ export function SetupScreen({ onComplete }: Props) {
         </section>
 
         <button
-          onClick={() => onComplete({ bookName: bookName.trim(), chapters: chapters.trim(), teams, questions })}
+          onClick={() => onComplete({ bookName: bookName.trim(), todayChapters, teams, questions })}
           disabled={!canStart}
           className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold py-4 rounded-xl text-lg transition-colors"
         >

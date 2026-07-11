@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import type { Team, Participant, Question, Turn, Score } from '../lib/types'
 import { createSender } from '../lib/broadcast'
 import {
@@ -16,7 +16,7 @@ type Phase = 'setup' | 'idle' | 'question' | 'revealed'
 interface State {
   phase: Phase
   bookName: string
-  chapters: string
+  todayChapters: number[]
   questions: Question[]
   teams: Team[]
   turns: Turn[]
@@ -28,7 +28,7 @@ interface State {
 }
 
 type Action =
-  | { type: 'SETUP_COMPLETE'; bookName: string; chapters: string; teams: Team[]; questions: Question[] }
+  | { type: 'SETUP_COMPLETE'; bookName: string; todayChapters: number[]; teams: Team[]; questions: Question[] }
   | { type: 'START_TURN'; team: Team; participant: Participant; question: Question }
   | { type: 'CHANGE_PARTICIPANT'; participant: Participant }
   | { type: 'SELECT_OPTION'; index: number }
@@ -40,13 +40,13 @@ function init(): State {
   const session = getSession()
   if (!session?.isActive) {
     return {
-      phase: 'setup', bookName: '', chapters: '', questions: [], teams: [],
+      phase: 'setup', bookName: '', todayChapters: [], questions: [], teams: [],
       turns: [], scores: [], currentTeam: null,
       currentParticipant: null, currentQuestion: null, selectedOptionIndex: null,
     }
   }
   return {
-    phase: 'idle', bookName: session.bookName, chapters: session.chapters, questions: [],
+    phase: 'idle', bookName: session.bookName, todayChapters: session.todayChapters, questions: [],
     teams: getTeams(), turns: getTurns(), scores: getScores(),
     currentTeam: null, currentParticipant: null, currentQuestion: null, selectedOptionIndex: null,
   }
@@ -55,7 +55,7 @@ function init(): State {
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SETUP_COMPLETE':
-      return { ...state, phase: 'idle', bookName: action.bookName, chapters: action.chapters, teams: action.teams, questions: action.questions }
+      return { ...state, phase: 'idle', bookName: action.bookName, todayChapters: action.todayChapters, teams: action.teams, questions: action.questions }
     case 'START_TURN':
       return { ...state, phase: 'question', currentTeam: action.team, currentParticipant: action.participant, currentQuestion: action.question, selectedOptionIndex: null }
     case 'CHANGE_PARTICIPANT':
@@ -68,12 +68,102 @@ function reducer(state: State, action: Action): State {
       return { ...state, phase: 'idle', currentTeam: null, currentParticipant: null, currentQuestion: null, selectedOptionIndex: null }
     case 'FINISH_BOOK':
       return {
-        phase: 'setup', bookName: '', chapters: '', questions: [], teams: [], turns: [], scores: [],
+        phase: 'setup', bookName: '', todayChapters: [], questions: [], teams: [], turns: [], scores: [],
         currentTeam: null, currentParticipant: null, currentQuestion: null, selectedOptionIndex: null,
       }
     default:
       return state
   }
+}
+
+// Panel that handles loading questions + selecting today's chapters on session resume
+function ResumePanel({
+  bookName,
+  savedChapters,
+  teams,
+  onStart,
+}: {
+  bookName: string
+  savedChapters: number[]
+  teams: Team[]
+  onStart: (questions: Question[], todayChapters: number[]) => void
+}) {
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [todayChapters, setTodayChapters] = useState<number[]>(savedChapters)
+  const [error, setError] = useState('')
+
+  const availableChapters = [...new Set(questions.map(q => q.chapter))].sort((a, b) => a - b)
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const qs = JSON.parse(await file.text()) as Question[]
+      setQuestions(qs)
+      // pre-select previous chapters if still available in new file
+      const newChapters = [...new Set(qs.map(q => q.chapter))]
+      setTodayChapters(savedChapters.filter(c => newChapters.includes(c)))
+      setError('')
+    } catch {
+      setError('JSON inválido')
+    }
+  }
+
+  function toggle(ch: number) {
+    setTodayChapters(prev =>
+      prev.includes(ch) ? prev.filter(c => c !== ch) : [...prev, ch].sort((a, b) => a - b)
+    )
+  }
+
+  const canStart = questions.length > 0 && todayChapters.length > 0
+
+  return (
+    <div className="flex flex-col items-center gap-5 bg-gray-800 rounded-xl p-8 max-w-md w-full">
+      <div className="text-center">
+        <p className="text-yellow-400 font-semibold text-lg">Sesión recuperada</p>
+        <p className="text-white font-bold text-xl mt-1">{bookName}</p>
+      </div>
+
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+
+      <label className="bg-gray-700 hover:bg-gray-600 cursor-pointer text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm w-full text-center">
+        📄 {questions.length > 0 ? `✓ ${questions.length} preguntas cargadas` : 'Cargar preguntas'}
+        <input type="file" accept=".json" className="hidden" onChange={handleFile} />
+      </label>
+
+      {availableChapters.length > 0 && (
+        <div className="w-full flex flex-col gap-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Capítulos de hoy</p>
+          <div className="flex flex-wrap gap-2">
+            {availableChapters.map(ch => (
+              <button
+                key={ch}
+                onClick={() => toggle(ch)}
+                className={`w-10 h-10 rounded-lg text-sm font-bold transition-colors ${
+                  todayChapters.includes(ch)
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                }`}
+              >
+                {ch}
+              </button>
+            ))}
+          </div>
+          {todayChapters.length === 0 && (
+            <p className="text-yellow-500 text-xs">Selecciona al menos un capítulo</p>
+          )}
+        </div>
+      )}
+
+      <button
+        onClick={() => onStart(questions, todayChapters)}
+        disabled={!canStart}
+        className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold py-3 px-8 rounded-xl transition-colors w-full"
+      >
+        Iniciar →
+      </button>
+    </div>
+  )
 }
 
 export function OperatorPage() {
@@ -89,18 +179,24 @@ export function OperatorPage() {
     }
   }, [])
 
-  function handleSetupComplete(data: { bookName: string; chapters: string; teams: Team[]; questions: Question[] }) {
-    saveSession({ bookName: data.bookName, chapters: data.chapters, startDate: new Date().toISOString(), isActive: true })
+  function handleSetupComplete(data: { bookName: string; todayChapters: number[]; teams: Team[]; questions: Question[] }) {
+    saveSession({ bookName: data.bookName, todayChapters: data.todayChapters, startDate: new Date().toISOString(), isActive: true })
     saveTeams(data.teams)
     dispatch({ type: 'SETUP_COMPLETE', ...data })
     senderRef.current?.send({ type: 'IDLE' })
   }
 
+  function handleResume(questions: Question[], todayChapters: number[]) {
+    saveSession({ bookName: state.bookName, todayChapters, startDate: new Date().toISOString(), isActive: true })
+    dispatch({ type: 'SETUP_COMPLETE', bookName: state.bookName, todayChapters, teams: state.teams, questions })
+    senderRef.current?.send({ type: 'IDLE' })
+  }
+
   function handleTeamSelect(team: Team) {
     const participant = pickParticipant(team.members, state.turns)
-    const question = pickQuestion(state.questions, state.turns)
+    const question = pickQuestion(state.questions, state.turns, state.todayChapters)
     if (!question) {
-      alert('No hay más preguntas disponibles. Carga un nuevo archivo de preguntas.')
+      alert('No hay más preguntas disponibles para los capítulos de hoy.')
       return
     }
     dispatch({ type: 'START_TURN', team, participant, question })
@@ -162,7 +258,7 @@ export function OperatorPage() {
         teams={state.teams}
         scores={state.scores}
         bookName={state.bookName}
-        chapters={state.chapters}
+        todayChapters={state.todayChapters}
         lastTeamId={lastTeamId}
         onFinishBook={handleFinishBook}
       />
@@ -171,25 +267,12 @@ export function OperatorPage() {
         {state.phase === 'idle' && (
           <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
             {state.questions.length === 0 ? (
-              <div className="flex flex-col items-center gap-4 bg-gray-800 rounded-xl p-8 max-w-sm w-full text-center">
-                <p className="text-yellow-400 font-semibold">Sesión recuperada: {state.bookName}</p>
-                <p className="text-gray-300 text-sm">Capítulos: {state.chapters}</p>
-                <p className="text-gray-400 text-sm">Carga el archivo de preguntas para continuar</p>
-                <label className="bg-indigo-600 hover:bg-indigo-700 cursor-pointer text-white font-semibold px-6 py-3 rounded-xl transition-colors">
-                  📄 Cargar preguntas
-                  <input
-                    type="file"
-                    accept=".json"
-                    className="hidden"
-                    onChange={async e => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
-                      const qs = JSON.parse(await file.text()) as Question[]
-                      dispatch({ type: 'SETUP_COMPLETE', bookName: state.bookName, teams: state.teams, questions: qs })
-                    }}
-                  />
-                </label>
-              </div>
+              <ResumePanel
+                bookName={state.bookName}
+                savedChapters={state.todayChapters}
+                teams={state.teams}
+                onStart={handleResume}
+              />
             ) : (
               <>
                 <p className="text-gray-400 text-lg">Selecciona el equipo que juega este turno</p>

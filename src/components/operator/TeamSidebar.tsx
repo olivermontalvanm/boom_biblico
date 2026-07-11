@@ -4,21 +4,29 @@ interface Props {
   teams: Team[]
   scores: Score[]
   bookName: string
-  chapters: string
+  todayChapters: number[]
   lastTeamId: string | null
   onFinishBook: () => void
 }
 
 const TEAM_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444']
 
-export function TeamSidebar({ teams, scores, bookName, chapters, lastTeamId, onFinishBook }: Props) {
+export function TeamSidebar({ teams, scores, bookName, todayChapters, lastTeamId, onFinishBook }: Props) {
   return (
     <div className="w-52 bg-[#1e1e2e] flex flex-col gap-3 p-4 shrink-0">
       <div>
         <p className="text-[10px] text-gray-500 uppercase tracking-widest">Libro actual</p>
         <p className="text-white font-semibold mt-1 text-sm">{bookName}</p>
-        <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-2">Capítulos de hoy</p>
-        <p className="text-indigo-300 font-medium text-sm mt-0.5">{chapters}</p>
+        {todayChapters.length > 0 && (
+          <>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-2">Capítulos de hoy</p>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {todayChapters.map(ch => (
+                <span key={ch} className="bg-indigo-900 text-indigo-300 text-xs font-bold rounded px-1.5 py-0.5">{ch}</span>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="h-px bg-gray-700" />

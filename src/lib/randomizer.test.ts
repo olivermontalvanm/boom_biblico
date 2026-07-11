@@ -60,13 +60,14 @@ describe('pickParticipant', () => {
 })
 
 describe('pickQuestion', () => {
-  const q1: Question = { id: 'q1', question: 'Q1', options: [] }
-  const q2: Question = { id: 'q2', question: 'Q2', options: [] }
-  const q3: Question = { id: 'q3', question: 'Q3', options: [] }
+  const q1: Question = { id: 'q1', chapter: 1, question: 'Q1', options: [] }
+  const q2: Question = { id: 'q2', chapter: 2, question: 'Q2', options: [] }
+  const q3: Question = { id: 'q3', chapter: 3, question: 'Q3', options: [] }
+  const allChapters = [1, 2, 3]
 
   it('does not pick a question already used', () => {
     const turns = [makeTurn('p1', `${today}T10:00:00.000Z`)]
-    const result = pickQuestion([q1, q2, q3], turns)
+    const result = pickQuestion([q1, q2, q3], turns, allChapters)
     expect(result?.id).not.toBe('q1')
   })
 
@@ -76,11 +77,20 @@ describe('pickQuestion', () => {
       { ...makeTurn('p2', `${today}T11:00:00.000Z`), questionId: 'q2' },
       { ...makeTurn('p3', `${today}T12:00:00.000Z`), questionId: 'q3' },
     ]
-    expect(pickQuestion([q1, q2, q3], turns)).toBeNull()
+    expect(pickQuestion([q1, q2, q3], turns, allChapters)).toBeNull()
   })
 
   it('returns any question when none are used', () => {
-    const result = pickQuestion([q1, q2, q3], [])
+    const result = pickQuestion([q1, q2, q3], [], allChapters)
     expect(['q1', 'q2', 'q3']).toContain(result?.id)
+  })
+
+  it('only picks questions from today chapters', () => {
+    const result = pickQuestion([q1, q2, q3], [], [1])
+    expect(result?.id).toBe('q1')
+  })
+
+  it('returns null when no questions match today chapters', () => {
+    expect(pickQuestion([q1, q2], [], [3])).toBeNull()
   })
 })

@@ -1,0 +1,167 @@
+[
+  {
+    "id": "q1",
+    "chapter": 1,
+    "question": "¿De qué material formó Dios a Adán?",
+    "options": [
+      { "text": "Barro del río", "isCorrect": false },
+      { "text": "Polvo de la tierra", "isCorrect": true },
+      { "text": "Arcilla del mar", "isCorrect": false },
+      { "text": "Piedra del monte", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q2",
+    "chapter": 1,
+    "question": "¿En qué día de la creación hizo Dios al ser humano?",
+    "options": [
+      { "text": "Quinto día", "isCorrect": false },
+      { "text": "Sexto día", "isCorrect": true },
+      { "text": "Séptimo día", "isCorrect": false },
+      { "text": "Cuarto día", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q3",
+    "chapter": 2,
+    "question": "¿De qué fue formada Eva según el relato de Génesis 2?",
+    "options": [
+      { "text": "Del polvo de la tierra", "isCorrect": false },
+      { "text": "De una costilla de Adán", "isCorrect": true },
+      { "text": "Del barro del río", "isCorrect": false },
+      { "text": "Del aliento de Dios", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q4",
+    "chapter": 2,
+    "question": "¿Cómo se llamaba el jardín donde Dios puso a Adán?",
+    "options": [
+      { "text": "Jardín del Edén", "isCorrect": true },
+      { "text": "Jardín del Paraíso", "isCorrect": false },
+      { "text": "Jardín de Nod", "isCorrect": false },
+      { "text": "Jardín de Canaán", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q5",
+    "chapter": 3,
+    "question": "¿Qué animal tentó a Eva en el jardín?",
+    "options": [
+      { "text": "Un lobo", "isCorrect": false },
+      { "text": "Un águila", "isCorrect": false },
+      { "text": "Una serpiente", "isCorrect": true },
+      { "text": "Un dragón", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q6",
+    "chapter": 3,
+    "question": "¿Con qué vistió Dios a Adán y Eva al sacarlos del jardín?",
+    "options": [
+      { "text": "Hojas de higuera", "isCorrect": false },
+      { "text": "Túnicas de lino", "isCorrect": false },
+      { "text": "Túnicas de pieles", "isCorrect": true },
+      { "text": "Ropas de lana", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q7",
+    "chapter": 4,
+    "question": "¿Cómo se llamaba el primer hijo de Adán y Eva?",
+    "options": [
+      { "text": "Abel", "isCorrect": false },
+      { "text": "Set", "isCorrect": false },
+      { "text": "Caín", "isCorrect": true },
+      { "text": "Enoc", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q8",
+    "chapter": 4,
+    "question": "¿Cuál fue el oficio de Abel, el segundo hijo de Adán?",
+    "options": [
+      { "text": "Labrador de la tierra", "isCorrect": false },
+      { "text": "Carpintero", "isCorrect": false },
+      { "text": "Pastor de ovejas", "isCorrect": true },
+      { "text": "Pescador", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q9",
+    "chapter": 5,
+    "question": "¿Cuántos años vivió Matusalén, el hombre de mayor longevidad en la Biblia?",
+    "options": [
+      { "text": "777 años", "isCorrect": false },
+      { "text": "900 años", "isCorrect": false },
+      { "text": "969 años", "isCorrect": true },
+      { "text": "1000 años", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q10",
+    "chapter": 5,
+    "question": "¿Qué ocurrió con Enoc, a diferencia de los demás patriarcas del capítulo 5?",
+    "options": [
+      { "text": "Murió en una batalla", "isCorrect": false },
+      { "text": "Fue llevado por Dios sin morir", "isCorrect": true },
+      { "text": "Vivió más de mil años", "isCorrect": false },
+      { "text": "Construyó el arca", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q11",
+    "chapter": 6,
+    "question": "¿Cuántos años tenía Noé cuando entró al arca?",
+    "options": [
+      { "text": "400 años", "isCorrect": false },
+      { "text": "500 años", "isCorrect": false },
+      { "text": "600 años", "isCorrect": true },
+      { "text": "700 años", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q12",
+    "chapter": 6,
+    "question": "¿Cuántos pisos tenía el arca de Noé?",
+    "options": [
+      { "text": "Uno", "isCorrect": false },
+      { "text": "Dos", "isCorrect": false },
+      { "text": "Tres", "isCorrect": true },
+      { "text": "Cuatro", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q13",
+    "chapter": 7,
+    "question": "¿Cuántos días duró el diluvio antes de que las aguas comenzaran a decrecer?",
+    "options": [
+      { "text": "40 días", "isCorrect": false },
+      { "text": "100 días", "isCorrect": false },
+      { "text": "150 días", "isCorrect": true },
+      { "text": "365 días", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q14",
+    "chapter": 8,
+    "question": "¿Qué ave soltó primero Noé para ver si las aguas habían bajado?",
+    "options": [
+      { "text": "Una paloma", "isCorrect": false },
+      { "text": "Un cuervo", "isCorrect": true },
+      { "text": "Una golondrina", "isCorrect": false },
+      { "text": "Un águila", "isCorrect": false }
+    ]
+  },
+  {
+    "id": "q15",
+    "chapter": 9,
+    "question": "¿Qué señal le dio Dios a Noé como pacto de que nunca volvería a destruir la tierra con agua?",
+    "options": [
+      { "text": "Una paloma blanca", "isCorrect": false },
+      { "text": "Un arco iris", "isCorrect": true },
+      { "text": "Una estrella", "isCorrect": false },
+      { "text": "Una nube brillante", "isCorrect": false }
+    ]
+  }
+]

@@ -27,9 +27,9 @@ export function pickParticipant(participants: Participant[], turns: Turn[]): Par
   return tied[Math.floor(Math.random() * tied.length)]
 }
 
-export function pickQuestion(questions: Question[], turns: Turn[]): Question | null {
+export function pickQuestion(questions: Question[], turns: Turn[], todayChapters: number[]): Question | null {
   const usedIds = new Set(turns.map(t => t.questionId))
-  const available = questions.filter(q => !usedIds.has(q.id))
+  const available = questions.filter(q => !usedIds.has(q.id) && todayChapters.includes(q.chapter))
   if (available.length === 0) return null
   return available[Math.floor(Math.random() * available.length)]
 }
