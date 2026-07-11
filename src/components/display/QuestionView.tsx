@@ -1,17 +1,14 @@
-import type { Participant, Team, Question, Score } from '../../lib/types'
-import { Scoreboard } from './Scoreboard'
+import type { Participant, Team, Question } from '../../lib/types'
 
 interface Props {
   participant: Participant
   team: Team
   question: Question
-  scores: Score[]
-  teams: Team[]
 }
 
 const LABELS = ['A', 'B', 'C', 'D']
 
-export function QuestionView({ participant, team, question, scores, teams }: Props) {
+export function QuestionView({ participant, team, question }: Props) {
   return (
     <div className="flex-1 flex flex-col">
       <div className="bg-gradient-to-r from-[#1e1e3a] to-[#2d1b69] px-8 py-5 flex items-center justify-between">
@@ -43,8 +40,6 @@ export function QuestionView({ participant, team, question, scores, teams }: Pro
           ))}
         </div>
       </div>
-
-      <Scoreboard scores={scores} teams={teams} />
     </div>
   )
 }

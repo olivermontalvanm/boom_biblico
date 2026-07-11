@@ -1,5 +1,4 @@
-import type { Participant, Team, Question, Score } from '../../lib/types'
-import { Scoreboard } from './Scoreboard'
+import type { Participant, Team, Question } from '../../lib/types'
 
 interface Props {
   correct: boolean
@@ -8,13 +7,11 @@ interface Props {
   question: Question
   participant: Participant
   team: Team
-  scores: Score[]
-  teams: Team[]
 }
 
 const LABELS = ['A', 'B', 'C', 'D']
 
-export function ResultView({ correct, correctOptionIndex, question, participant, team, scores, teams }: Props) {
+export function ResultView({ correct, correctOptionIndex, question, participant, team }: Props) {
   const correctOption = question.options[correctOptionIndex]
 
   return (
@@ -58,8 +55,6 @@ export function ResultView({ correct, correctOptionIndex, question, participant,
           </>
         )}
       </div>
-
-      <Scoreboard scores={scores} teams={teams} />
     </div>
   )
 }

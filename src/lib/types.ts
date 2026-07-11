@@ -46,7 +46,7 @@ export interface Turn {
 
 export type DisplayEvent =
   | { type: 'IDLE' }
-  | { type: 'SHOW_QUESTION'; participant: Participant; team: Team; question: Question }
+  | { type: 'SHOW_QUESTION'; participant: Participant; team: Team; question: Question; teams: Team[] }
   | { type: 'REVEAL_ANSWER'; selectedOptionIndex: number; correct: boolean; correctOptionIndex: number }
   | { type: 'UPDATE_SCORES'; scores: Score[] }
   | { type: 'SHOW_FINAL_SCORES'; scores: Score[]; teams: Team[] };

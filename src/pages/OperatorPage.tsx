@@ -103,7 +103,7 @@ export function OperatorPage() {
       return
     }
     dispatch({ type: 'START_TURN', team, participant, question })
-    senderRef.current?.send({ type: 'SHOW_QUESTION', participant, team, question })
+    senderRef.current?.send({ type: 'SHOW_QUESTION', participant, team, question, teams: state.teams })
   }
 
   function handleConfirmAnswer() {
@@ -133,7 +133,7 @@ export function OperatorPage() {
     if (others.length === 0) return
     const newParticipant = pickParticipant(others, state.turns)
     dispatch({ type: 'CHANGE_PARTICIPANT', participant: newParticipant })
-    senderRef.current?.send({ type: 'SHOW_QUESTION', participant: newParticipant, team: state.currentTeam, question: state.currentQuestion })
+    senderRef.current?.send({ type: 'SHOW_QUESTION', participant: newParticipant, team: state.currentTeam, question: state.currentQuestion, teams: state.teams })
   }
 
   function handleNextTurn() {
