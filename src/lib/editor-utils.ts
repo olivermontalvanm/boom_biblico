@@ -29,8 +29,18 @@ export function groupByChapter(questions: Question[]): { chapter: number; questi
     .map(([chapter, questions]) => ({ chapter, questions }))
 }
 
+export function isValidQuestionShape(item: unknown): item is Question {
+  if (typeof item !== 'object' || item === null) return false
+  const q = item as Record<string, unknown>
+  return typeof q['id'] === 'string' && Array.isArray(q['options'])
+}
+
 export function saveEditorDraft(questions: Question[]): void {
-  localStorage.setItem(EDITOR_KEY, JSON.stringify(questions))
+  try {
+    localStorage.setItem(EDITOR_KEY, JSON.stringify(questions))
+  } catch {
+    console.warn('bb:editor-draft — no se pudo guardar (almacenamiento lleno)')
+  }
 }
 
 export function loadEditorDraft(): Question[] | null {
@@ -38,7 +48,7 @@ export function loadEditorDraft(): Question[] | null {
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return null
+    if (!Array.isArray(parsed) || !parsed.every(isValidQuestionShape)) return null
     return parsed as Question[]
   } catch {
     return null

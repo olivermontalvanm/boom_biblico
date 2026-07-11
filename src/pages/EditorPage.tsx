@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import type { Question } from '../lib/types'
 import {
   generateId, validateQuestion, groupByChapter,
-  saveEditorDraft, loadEditorDraft,
+  saveEditorDraft, loadEditorDraft, isValidQuestionShape,
 } from '../lib/editor-utils'
 
 // ── State ────────────────────────────────────────────────────────────────────
@@ -127,8 +127,13 @@ export function EditorPage() {
     const file = e.target.files?.[0]
     if (!file) return
     try {
-      const questions = JSON.parse(await file.text()) as Question[]
-      dispatch({ type: 'LOAD', questions })
+      const parsed: unknown = JSON.parse(await file.text())
+      if (!Array.isArray(parsed) || !parsed.every(isValidQuestionShape)) {
+        alert('JSON inválido: se esperaba un arreglo de preguntas con id y opciones')
+        e.target.value = ''
+        return
+      }
+      dispatch({ type: 'LOAD', questions: parsed as Question[] })
     } catch {
       alert('JSON inválido')
     }
