@@ -45,6 +45,9 @@ describe('pickParticipant', () => {
   })
 
   it('prefers participant who went least recently when falling back', () => {
+    // All went today. p1's most-recent turn is 10:00, p2 is 11:00, p3 is 12:00.
+    // The old 2020 turn for p2 should NOT affect the result — last-turn is the max date.
+    // p1 went least recently (10:00 < 11:00 < 12:00), so p1 should be picked.
     const turns = [
       makeTurn('p1', `${today}T10:00:00.000Z`),
       makeTurn('p2', `${today}T11:00:00.000Z`),
@@ -52,7 +55,7 @@ describe('pickParticipant', () => {
       makeTurn('p2', '2020-01-01T10:00:00.000Z'),
     ]
     const result = pickParticipant(all, turns)
-    expect(['p1', 'p2', 'p3']).toContain(result.id)
+    expect(result.id).toBe('p1')
   })
 })
 

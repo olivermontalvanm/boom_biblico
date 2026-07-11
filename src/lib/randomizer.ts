@@ -6,7 +6,7 @@ function todayPrefix(): string {
 
 function lastTurnDate(participantId: string, turns: Turn[]): string {
   const mine = turns.filter(t => t.participantId === participantId)
-  return mine.length === 0 ? '' : mine[mine.length - 1].date
+  return mine.length === 0 ? '' : mine.map(t => t.date).sort().at(-1)!
 }
 
 export function pickParticipant(participants: Participant[], turns: Turn[]): Participant {
