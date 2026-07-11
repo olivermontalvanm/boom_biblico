@@ -168,14 +168,14 @@ export function EditorPage() {
           <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleLoadFile} />
           <button
             onClick={handleExport}
-            disabled={state.questions.length === 0}
+            disabled={state.questions.length === 0 || invalidCount > 0}
             className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:bg-gray-700 disabled:text-gray-500 ${
               invalidCount > 0
                 ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
                 : 'bg-emerald-600 hover:bg-emerald-700 text-white'
             }`}
           >
-            ⬇ Exportar JSON{invalidCount > 0 ? ` (${invalidCount} error${invalidCount === 1 ? '' : 'es'})` : ''}
+            ⬇ Exportar JSON{invalidCount > 0 ? ` (${invalidCount} pregunta${invalidCount === 1 ? '' : 's'} con error${invalidCount === 1 ? '' : 'es'})` : ''}
           </button>
           <Link
             to="/operator"
