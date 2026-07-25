@@ -3,6 +3,7 @@ export interface BookSession {
   todayChapters: number[];
   startDate: string;
   isActive: boolean;
+  questionMultiplier?: number;
 }
 
 export interface Participant {
@@ -49,7 +50,7 @@ export interface Turn {
 export type DisplayEvent =
   | { type: 'IDLE' }
   | { type: 'SHOW_PARTICIPANT'; participant: Participant; team: Team; teams: Team[] }
-  | { type: 'SHOW_QUESTION'; participant: Participant; team: Team; question: Question; teams: Team[] }
+  | { type: 'SHOW_QUESTION'; participant: Participant; team: Team; question: Question; teams: Team[]; value: number }
   | { type: 'REVEAL_ANSWER'; selectedOptionIndex: number; correct: boolean; correctOptionIndex: number }
   | { type: 'UPDATE_SCORES'; scores: Score[] }
   | { type: 'SHOW_RESULTS'; scores: Score[]; teams: Team[] }

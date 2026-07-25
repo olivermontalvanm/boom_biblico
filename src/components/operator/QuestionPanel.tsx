@@ -5,6 +5,7 @@ interface Props {
   team: Team
   question: Question
   questionNumber: number
+  questionValue: number
   selectedOptionIndex: number | null
   revealed: boolean
   onSelectOption: (index: number) => void
@@ -15,7 +16,7 @@ interface Props {
 const LABELS = ['A', 'B', 'C', 'D']
 
 export function QuestionPanel({
-  participant, team, question, questionNumber,
+  participant, team, question, questionNumber, questionValue,
   selectedOptionIndex, revealed,
   onSelectOption, onConfirm, onNextTurn,
 }: Props) {
@@ -31,6 +32,9 @@ export function QuestionPanel({
         </div>
         <span className="text-gray-600 text-sm bg-[#2a2a3e] px-3 py-1 rounded">
           Pregunta #{questionNumber}
+        </span>
+        <span className="text-yellow-300 text-sm bg-yellow-900/40 px-3 py-1 rounded font-semibold">
+          Vale {questionValue} {questionValue === 1 ? 'acierto' : 'aciertos'}
         </span>
       </div>
 
