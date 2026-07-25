@@ -3,17 +3,19 @@ import type { Team, Participant, Question, Turn, Score } from '../lib/types'
 import { createSender } from '../lib/broadcast'
 import {
   getTeams, saveTeams, getTurns, addTurn,
-  getScores, updateScore, setScore, getSession, saveSession, clearAll,
+  getScores, saveScores, updateScore, setScore, getSession, saveSession, clearAll,
 } from '../lib/storage'
 import { pickParticipant, pickQuestion } from '../lib/randomizer'
+import { moveParticipantToTeam, moveScoreToTeam } from '../lib/teams'
 import { SetupScreen } from '../components/operator/SetupScreen'
 import { TeamSidebar } from '../components/operator/TeamSidebar'
 import { ParticipantPanel } from '../components/operator/ParticipantPanel'
 import { CallingPanel } from '../components/operator/CallingPanel'
 import { QuestionPanel } from '../components/operator/QuestionPanel'
 import { ResultsPanel } from '../components/operator/ResultsPanel'
+import { TeamsEditPanel } from '../components/operator/TeamsEditPanel'
 
-type Phase = 'setup' | 'idle' | 'calling' | 'question' | 'revealed' | 'results'
+type Phase = 'setup' | 'idle' | 'calling' | 'question' | 'revealed' | 'results' | 'teams'
 
 interface State {
   phase: Phase
@@ -45,6 +47,9 @@ type Action =
   | { type: 'SHOW_RESULTS' }
   | { type: 'HIDE_RESULTS' }
   | { type: 'UPDATE_SCORE'; scores: Score[] }
+  | { type: 'SHOW_TEAMS' }
+  | { type: 'HIDE_TEAMS' }
+  | { type: 'UPDATE_TEAMS'; teams: Team[] }
 
 function init(): State {
   const session = getSession()
@@ -93,6 +98,12 @@ function reducer(state: State, action: Action): State {
       return { ...state, phase: 'idle' }
     case 'UPDATE_SCORE':
       return { ...state, scores: action.scores }
+    case 'SHOW_TEAMS':
+      return { ...state, phase: 'teams' }
+    case 'HIDE_TEAMS':
+      return { ...state, phase: 'idle' }
+    case 'UPDATE_TEAMS':
+      return { ...state, teams: action.teams }
     default:
       return state
   }
@@ -312,6 +323,31 @@ export function OperatorPage() {
     senderRef.current?.send({ type: 'UPDATE_SCORES', scores: newScores })
   }
 
+  function handleShowTeams() {
+    dispatch({ type: 'SHOW_TEAMS' })
+  }
+
+  function handleHideTeams() {
+    dispatch({ type: 'HIDE_TEAMS' })
+  }
+
+  function handleUpdateTeams(newTeams: Team[]) {
+    saveTeams(newTeams)
+    dispatch({ type: 'UPDATE_TEAMS', teams: newTeams })
+    senderRef.current?.send({ type: 'UPDATE_TEAMS', teams: newTeams })
+  }
+
+  function handleMoveParticipant(participantId: string, toTeamId: string) {
+    const newTeams = moveParticipantToTeam(state.teams, participantId, toTeamId)
+    const newScores = moveScoreToTeam(state.scores, participantId, toTeamId)
+    saveTeams(newTeams)
+    saveScores(newScores)
+    dispatch({ type: 'UPDATE_TEAMS', teams: newTeams })
+    dispatch({ type: 'UPDATE_SCORE', scores: newScores })
+    senderRef.current?.send({ type: 'UPDATE_TEAMS', teams: newTeams })
+    senderRef.current?.send({ type: 'UPDATE_SCORES', scores: newScores })
+  }
+
   if (state.phase === 'setup') {
     return <SetupScreen onComplete={handleSetupComplete} />
   }
@@ -335,6 +371,7 @@ export function OperatorPage() {
         questionMultiplier={state.questionMultiplier}
         onChangeMultiplier={handleSetMultiplier}
         onShowResults={handleShowResults}
+        onEditTeams={handleShowTeams}
         onFinishBook={handleFinishBook}
       />
 
@@ -470,6 +507,16 @@ export function OperatorPage() {
             scores={state.scores}
             onUpdateScore={handleUpdateScore}
             onClose={handleHideResults}
+          />
+        )}
+
+        {state.phase === 'teams' && (
+          <TeamsEditPanel
+            teams={state.teams}
+            scores={state.scores}
+            onUpdateTeams={handleUpdateTeams}
+            onMoveParticipant={handleMoveParticipant}
+            onClose={handleHideTeams}
           />
         )}
       </div>
