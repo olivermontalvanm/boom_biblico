@@ -19,6 +19,16 @@ function importTeams(raw: TeamsImport): Team[] {
   })
 }
 
+function exportTeams(teams: Team[]): TeamsImport {
+  return {
+    teams: teams.map(t => ({
+      name: t.name,
+      captain: t.members.find(m => m.id === t.captainId)?.name ?? '',
+      members: t.members.map(m => m.name),
+    })),
+  }
+}
+
 function availableChapters(questions: Question[]): number[] {
   return [...new Set(questions.map(q => q.chapter))].sort((a, b) => a - b)
 }
@@ -55,6 +65,16 @@ export function SetupScreen({ onComplete }: Props) {
     } catch {
       setError('Error al leer el archivo de equipos. Verifica que sea un JSON válido.')
     }
+  }
+
+  function handleTeamsExport() {
+    const blob = new Blob([JSON.stringify(exportTeams(teams), null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'equipos.json'
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   function toggleChapter(ch: number) {
@@ -179,6 +199,13 @@ export function SetupScreen({ onComplete }: Props) {
                 📥 Importar JSON
               </button>
               <input ref={teamsRef} type="file" accept=".json" className="hidden" onChange={handleTeamsFile} />
+              <button
+                onClick={handleTeamsExport}
+                disabled={teams.length === 0}
+                className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 px-3 py-1.5 rounded text-xs transition-colors"
+              >
+                📤 Exportar JSON
+              </button>
               <button
                 onClick={addTeam}
                 className="bg-indigo-700 hover:bg-indigo-600 px-3 py-1.5 rounded text-xs transition-colors"
