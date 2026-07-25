@@ -2,12 +2,14 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import type { DisplayEvent, Participant, Team, Question, Score } from '../lib/types'
 import { createReceiver } from '../lib/broadcast'
 import { IdleScreen } from '../components/display/IdleScreen'
+import { CallingView } from '../components/display/CallingView'
 import { QuestionView } from '../components/display/QuestionView'
 import { ResultView } from '../components/display/ResultView'
 import { Scoreboard } from '../components/display/Scoreboard'
 
 type DisplayState =
   | { view: 'idle'; scores: Score[]; teams: Team[] }
+  | { view: 'calling'; participant: Participant; team: Team; scores: Score[]; teams: Team[] }
   | { view: 'question'; participant: Participant; team: Team; question: Question; scores: Score[]; teams: Team[] }
   | { view: 'result'; correct: boolean; selectedOptionIndex: number; correctOptionIndex: number; participant: Participant; team: Team; question: Question; scores: Score[]; teams: Team[] }
   | { view: 'final'; scores: Score[]; teams: Team[] }
@@ -16,6 +18,8 @@ function reducer(state: DisplayState, event: DisplayEvent): DisplayState {
   switch (event.type) {
     case 'IDLE':
       return { view: 'idle', scores: state.scores, teams: state.teams }
+    case 'SHOW_PARTICIPANT':
+      return { view: 'calling', participant: event.participant, team: event.team, scores: state.scores, teams: event.teams }
     case 'SHOW_QUESTION':
       return { view: 'question', participant: event.participant, team: event.team, question: event.question, scores: state.scores, teams: event.teams }
     case 'REVEAL_ANSWER':
@@ -74,6 +78,9 @@ export function DisplayPage() {
 
       <div key={displayed.view} className={`flex-1 flex flex-col ${animClass}`}>
         {displayed.view === 'idle' && <IdleScreen />}
+        {displayed.view === 'calling' && (
+          <CallingView participant={displayed.participant} team={displayed.team} />
+        )}
         {displayed.view === 'question' && (
           <QuestionView
             participant={displayed.participant}
