@@ -3,7 +3,7 @@ import type { Team, Participant, Question, Turn, Score } from '../lib/types'
 import { createSender } from '../lib/broadcast'
 import {
   getTeams, saveTeams, getTurns, addTurn,
-  getScores, updateScore, getSession, saveSession, clearAll,
+  getScores, updateScore, setScore, getSession, saveSession, clearAll,
 } from '../lib/storage'
 import { pickParticipant, pickQuestion } from '../lib/randomizer'
 import { SetupScreen } from '../components/operator/SetupScreen'
@@ -11,8 +11,9 @@ import { TeamSidebar } from '../components/operator/TeamSidebar'
 import { ParticipantPanel } from '../components/operator/ParticipantPanel'
 import { CallingPanel } from '../components/operator/CallingPanel'
 import { QuestionPanel } from '../components/operator/QuestionPanel'
+import { ResultsPanel } from '../components/operator/ResultsPanel'
 
-type Phase = 'setup' | 'idle' | 'calling' | 'question' | 'revealed'
+type Phase = 'setup' | 'idle' | 'calling' | 'question' | 'revealed' | 'results'
 
 interface State {
   phase: Phase
@@ -37,6 +38,9 @@ type Action =
   | { type: 'CONFIRM_ANSWER'; turn: Turn; scores: Score[] }
   | { type: 'NEXT_TURN' }
   | { type: 'FINISH_BOOK' }
+  | { type: 'SHOW_RESULTS' }
+  | { type: 'HIDE_RESULTS' }
+  | { type: 'UPDATE_SCORE'; scores: Score[] }
 
 function init(): State {
   const session = getSession()
@@ -75,6 +79,12 @@ function reducer(state: State, action: Action): State {
         phase: 'setup', bookName: '', todayChapters: [], questions: [], teams: [], turns: [], scores: [],
         currentTeam: null, currentParticipant: null, currentQuestion: null, selectedOptionIndex: null,
       }
+    case 'SHOW_RESULTS':
+      return { ...state, phase: 'results' }
+    case 'HIDE_RESULTS':
+      return { ...state, phase: 'idle' }
+    case 'UPDATE_SCORE':
+      return { ...state, scores: action.scores }
     default:
       return state
   }
@@ -266,6 +276,22 @@ export function OperatorPage() {
     dispatch({ type: 'FINISH_BOOK' })
   }
 
+  function handleShowResults() {
+    dispatch({ type: 'SHOW_RESULTS' })
+    senderRef.current?.send({ type: 'SHOW_RESULTS', scores: state.scores, teams: state.teams })
+  }
+
+  function handleHideResults() {
+    dispatch({ type: 'HIDE_RESULTS' })
+    senderRef.current?.send({ type: 'IDLE' })
+  }
+
+  function handleUpdateScore(participantId: string, teamId: string, correct: number, incorrect: number) {
+    const newScores = setScore(participantId, teamId, correct, incorrect)
+    dispatch({ type: 'UPDATE_SCORE', scores: newScores })
+    senderRef.current?.send({ type: 'UPDATE_SCORES', scores: newScores })
+  }
+
   if (state.phase === 'setup') {
     return <SetupScreen onComplete={handleSetupComplete} />
   }
@@ -286,6 +312,7 @@ export function OperatorPage() {
         todayChapters={state.todayChapters}
         remainingQuestions={remainingQuestions}
         lastTeamId={lastTeamId}
+        onShowResults={handleShowResults}
         onFinishBook={handleFinishBook}
       />
 
@@ -409,6 +436,15 @@ export function OperatorPage() {
             onSelectOption={index => dispatch({ type: 'SELECT_OPTION', index })}
             onConfirm={handleConfirmAnswer}
             onNextTurn={handleNextTurn}
+          />
+        )}
+
+        {state.phase === 'results' && (
+          <ResultsPanel
+            teams={state.teams}
+            scores={state.scores}
+            onUpdateScore={handleUpdateScore}
+            onClose={handleHideResults}
           />
         )}
       </div>

@@ -3,7 +3,7 @@ import {
   getSession, saveSession,
   getTeams, saveTeams,
   getTurns, addTurn,
-  getScores, updateScore,
+  getScores, updateScore, setScore,
   clearAll,
 } from './storage'
 import type { BookSession, Team, Participant, Turn } from './types'
@@ -72,6 +72,17 @@ describe('scores', () => {
     updateScore('p1', 't1', true)
     updateScore('p1', 't1', false)
     expect(getScores()).toEqual([{ participantId: 'p1', teamId: 't1', correct: 1, incorrect: 1 }])
+  })
+
+  it('setScore creates a score with explicit values', () => {
+    const scores = setScore('p1', 't1', 5, 2)
+    expect(scores).toEqual([{ participantId: 'p1', teamId: 't1', correct: 5, incorrect: 2 }])
+  })
+
+  it('setScore overwrites an existing score instead of incrementing it', () => {
+    updateScore('p1', 't1', true)
+    const scores = setScore('p1', 't1', 10, 4)
+    expect(scores).toEqual([{ participantId: 'p1', teamId: 't1', correct: 10, incorrect: 4 }])
   })
 })
 

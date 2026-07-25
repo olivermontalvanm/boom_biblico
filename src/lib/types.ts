@@ -52,6 +52,7 @@ export type DisplayEvent =
   | { type: 'SHOW_QUESTION'; participant: Participant; team: Team; question: Question; teams: Team[] }
   | { type: 'REVEAL_ANSWER'; selectedOptionIndex: number; correct: boolean; correctOptionIndex: number }
   | { type: 'UPDATE_SCORES'; scores: Score[] }
+  | { type: 'SHOW_RESULTS'; scores: Score[]; teams: Team[] }
   | { type: 'SHOW_FINAL_SCORES'; scores: Score[]; teams: Team[] };
 
 export interface TeamsImport {
