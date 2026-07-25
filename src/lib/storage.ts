@@ -45,14 +45,14 @@ export function saveScores(scores: Score[]): void {
   localStorage.setItem(KEYS.scores, JSON.stringify(scores))
 }
 
-export function updateScore(participantId: string, teamId: string, correct: boolean): Score[] {
+export function updateScore(participantId: string, teamId: string, correct: boolean, points = 1): Score[] {
   const scores = getScores()
   const existing = scores.find(s => s.participantId === participantId)
   if (existing) {
-    if (correct) existing.correct += 1
+    if (correct) existing.correct += points
     else existing.incorrect += 1
   } else {
-    scores.push({ participantId, teamId, correct: correct ? 1 : 0, incorrect: correct ? 0 : 1 })
+    scores.push({ participantId, teamId, correct: correct ? points : 0, incorrect: correct ? 0 : 1 })
   }
   saveScores(scores)
   return scores

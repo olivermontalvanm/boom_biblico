@@ -7,11 +7,12 @@ interface Props {
   question: Question
   participant: Participant
   team: Team
+  value: number
 }
 
 const LABELS = ['A', 'B', 'C', 'D']
 
-export function ResultView({ correct, correctOptionIndex, question, participant, team }: Props) {
+export function ResultView({ correct, correctOptionIndex, question, participant, team, value }: Props) {
   const correctOption = question.options[correctOptionIndex]
 
   return (
@@ -40,7 +41,7 @@ export function ResultView({ correct, correctOptionIndex, question, participant,
                 {LABELS[correctOptionIndex]} · {correctOption.text}
               </p>
             </div>
-            <p className="text-yellow-400 text-xl font-semibold">+1 punto para {team.name} 🎉</p>
+            <p className="text-yellow-400 text-xl font-semibold">+{value} {value === 1 ? 'punto' : 'puntos'} para {team.name} 🎉</p>
           </>
         ) : (
           <>

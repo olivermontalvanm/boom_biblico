@@ -11,8 +11,8 @@ import { Scoreboard } from '../components/display/Scoreboard'
 type DisplayState =
   | { view: 'idle'; scores: Score[]; teams: Team[] }
   | { view: 'calling'; participant: Participant; team: Team; scores: Score[]; teams: Team[] }
-  | { view: 'question'; participant: Participant; team: Team; question: Question; scores: Score[]; teams: Team[] }
-  | { view: 'result'; correct: boolean; selectedOptionIndex: number; correctOptionIndex: number; participant: Participant; team: Team; question: Question; scores: Score[]; teams: Team[] }
+  | { view: 'question'; participant: Participant; team: Team; question: Question; value: number; scores: Score[]; teams: Team[] }
+  | { view: 'result'; correct: boolean; selectedOptionIndex: number; correctOptionIndex: number; participant: Participant; team: Team; question: Question; value: number; scores: Score[]; teams: Team[] }
   | { view: 'results'; scores: Score[]; teams: Team[] }
   | { view: 'final'; scores: Score[]; teams: Team[] }
 
@@ -23,10 +23,10 @@ function reducer(state: DisplayState, event: DisplayEvent): DisplayState {
     case 'SHOW_PARTICIPANT':
       return { view: 'calling', participant: event.participant, team: event.team, scores: state.scores, teams: event.teams }
     case 'SHOW_QUESTION':
-      return { view: 'question', participant: event.participant, team: event.team, question: event.question, scores: state.scores, teams: event.teams }
+      return { view: 'question', participant: event.participant, team: event.team, question: event.question, value: event.value, scores: state.scores, teams: event.teams }
     case 'REVEAL_ANSWER':
       if (state.view !== 'question') return state
-      return { view: 'result', correct: event.correct, selectedOptionIndex: event.selectedOptionIndex, correctOptionIndex: event.correctOptionIndex, participant: state.participant, team: state.team, question: state.question, scores: state.scores, teams: state.teams }
+      return { view: 'result', correct: event.correct, selectedOptionIndex: event.selectedOptionIndex, correctOptionIndex: event.correctOptionIndex, participant: state.participant, team: state.team, question: state.question, value: state.value, scores: state.scores, teams: state.teams }
     case 'UPDATE_SCORES':
       return { ...state, scores: event.scores }
     case 'SHOW_RESULTS':
@@ -90,6 +90,7 @@ export function DisplayPage() {
             participant={displayed.participant}
             team={displayed.team}
             question={displayed.question}
+            value={displayed.value}
           />
         )}
         {displayed.view === 'result' && (
@@ -100,6 +101,7 @@ export function DisplayPage() {
             question={displayed.question}
             participant={displayed.participant}
             team={displayed.team}
+            value={displayed.value}
           />
         )}
         {displayed.view === 'results' && (

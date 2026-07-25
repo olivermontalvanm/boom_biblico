@@ -23,16 +23,20 @@ interface State {
   teams: Team[]
   turns: Turn[]
   scores: Score[]
+  questionMultiplier: number
   currentTeam: Team | null
   currentParticipant: Participant | null
   currentQuestion: Question | null
+  currentQuestionValue: number
   selectedOptionIndex: number | null
 }
 
 type Action =
   | { type: 'SETUP_COMPLETE'; bookName: string; todayChapters: number[]; teams: Team[]; questions: Question[] }
+  | { type: 'SET_MULTIPLIER'; multiplier: number }
   | { type: 'START_TURN'; team: Team; participant: Participant; question: Question }
   | { type: 'CHANGE_PARTICIPANT'; participant: Participant }
+  | { type: 'SET_QUESTION_VALUE'; value: number }
   | { type: 'MARK_READY' }
   | { type: 'SELECT_OPTION'; index: number }
   | { type: 'CONFIRM_ANSWER'; turn: Turn; scores: Score[] }
@@ -47,14 +51,14 @@ function init(): State {
   if (!session?.isActive) {
     return {
       phase: 'setup', bookName: '', todayChapters: [], questions: [], teams: [],
-      turns: [], scores: [], currentTeam: null,
-      currentParticipant: null, currentQuestion: null, selectedOptionIndex: null,
+      turns: [], scores: [], questionMultiplier: 1, currentTeam: null,
+      currentParticipant: null, currentQuestion: null, currentQuestionValue: 1, selectedOptionIndex: null,
     }
   }
   return {
     phase: 'idle', bookName: session.bookName, todayChapters: session.todayChapters, questions: [],
-    teams: getTeams(), turns: getTurns(), scores: getScores(),
-    currentTeam: null, currentParticipant: null, currentQuestion: null, selectedOptionIndex: null,
+    teams: getTeams(), turns: getTurns(), scores: getScores(), questionMultiplier: session.questionMultiplier ?? 1,
+    currentTeam: null, currentParticipant: null, currentQuestion: null, currentQuestionValue: 1, selectedOptionIndex: null,
   }
 }
 
@@ -62,10 +66,14 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SETUP_COMPLETE':
       return { ...state, phase: 'idle', bookName: action.bookName, todayChapters: action.todayChapters, teams: action.teams, questions: action.questions }
+    case 'SET_MULTIPLIER':
+      return { ...state, questionMultiplier: action.multiplier }
     case 'START_TURN':
-      return { ...state, phase: 'calling', currentTeam: action.team, currentParticipant: action.participant, currentQuestion: action.question, selectedOptionIndex: null }
+      return { ...state, phase: 'calling', currentTeam: action.team, currentParticipant: action.participant, currentQuestion: action.question, currentQuestionValue: state.questionMultiplier, selectedOptionIndex: null }
     case 'CHANGE_PARTICIPANT':
       return { ...state, currentParticipant: action.participant, selectedOptionIndex: null }
+    case 'SET_QUESTION_VALUE':
+      return { ...state, currentQuestionValue: action.value }
     case 'MARK_READY':
       return { ...state, phase: 'question' }
     case 'SELECT_OPTION':
@@ -73,11 +81,11 @@ function reducer(state: State, action: Action): State {
     case 'CONFIRM_ANSWER':
       return { ...state, phase: 'revealed', turns: [...state.turns, action.turn], scores: action.scores }
     case 'NEXT_TURN':
-      return { ...state, phase: 'idle', currentTeam: null, currentParticipant: null, currentQuestion: null, selectedOptionIndex: null }
+      return { ...state, phase: 'idle', currentTeam: null, currentParticipant: null, currentQuestion: null, currentQuestionValue: state.questionMultiplier, selectedOptionIndex: null }
     case 'FINISH_BOOK':
       return {
-        phase: 'setup', bookName: '', todayChapters: [], questions: [], teams: [], turns: [], scores: [],
-        currentTeam: null, currentParticipant: null, currentQuestion: null, selectedOptionIndex: null,
+        phase: 'setup', bookName: '', todayChapters: [], questions: [], teams: [], turns: [], scores: [], questionMultiplier: 1,
+        currentTeam: null, currentParticipant: null, currentQuestion: null, currentQuestionValue: 1, selectedOptionIndex: null,
       }
     case 'SHOW_RESULTS':
       return { ...state, phase: 'results' }
@@ -195,16 +203,23 @@ export function OperatorPage() {
   }, [])
 
   function handleSetupComplete(data: { bookName: string; todayChapters: number[]; teams: Team[]; questions: Question[] }) {
-    saveSession({ bookName: data.bookName, todayChapters: data.todayChapters, startDate: new Date().toISOString(), isActive: true })
+    saveSession({ bookName: data.bookName, todayChapters: data.todayChapters, startDate: new Date().toISOString(), isActive: true, questionMultiplier: 1 })
     saveTeams(data.teams)
     dispatch({ type: 'SETUP_COMPLETE', ...data })
     senderRef.current?.send({ type: 'IDLE' })
   }
 
   function handleResume(questions: Question[], todayChapters: number[]) {
-    saveSession({ bookName: state.bookName, todayChapters, startDate: new Date().toISOString(), isActive: true })
+    saveSession({ bookName: state.bookName, todayChapters, startDate: new Date().toISOString(), isActive: true, questionMultiplier: state.questionMultiplier })
     dispatch({ type: 'SETUP_COMPLETE', bookName: state.bookName, todayChapters, teams: state.teams, questions })
     senderRef.current?.send({ type: 'IDLE' })
+  }
+
+  function handleSetMultiplier(multiplier: number) {
+    const value = Math.max(1, multiplier)
+    const session = getSession()
+    if (session) saveSession({ ...session, questionMultiplier: value })
+    dispatch({ type: 'SET_MULTIPLIER', multiplier: value })
   }
 
   function handleStartTurn(team: Team, participant: Participant) {
@@ -218,6 +233,10 @@ export function OperatorPage() {
     senderRef.current?.send({ type: 'SHOW_PARTICIPANT', participant, team, teams: state.teams })
   }
 
+  function handleSetQuestionValue(value: number) {
+    dispatch({ type: 'SET_QUESTION_VALUE', value: Math.max(1, value) })
+  }
+
   function handleMarkReady() {
     if (!state.currentTeam || !state.currentParticipant || !state.currentQuestion) return
     dispatch({ type: 'MARK_READY' })
@@ -227,6 +246,7 @@ export function OperatorPage() {
       team: state.currentTeam,
       question: state.currentQuestion,
       teams: state.teams,
+      value: state.currentQuestionValue,
     })
   }
 
@@ -249,7 +269,7 @@ export function OperatorPage() {
     }
 
     addTurn(turn)
-    const newScores = updateScore(state.currentParticipant.id, state.currentTeam.id, correct)
+    const newScores = updateScore(state.currentParticipant.id, state.currentTeam.id, correct, state.currentQuestionValue)
     dispatch({ type: 'CONFIRM_ANSWER', turn, scores: newScores })
     senderRef.current?.send({ type: 'REVEAL_ANSWER', selectedOptionIndex: state.selectedOptionIndex, correct, correctOptionIndex })
     senderRef.current?.send({ type: 'UPDATE_SCORES', scores: newScores })
@@ -312,6 +332,8 @@ export function OperatorPage() {
         todayChapters={state.todayChapters}
         remainingQuestions={remainingQuestions}
         lastTeamId={lastTeamId}
+        questionMultiplier={state.questionMultiplier}
+        onChangeMultiplier={handleSetMultiplier}
         onShowResults={handleShowResults}
         onFinishBook={handleFinishBook}
       />
@@ -419,7 +441,9 @@ export function OperatorPage() {
             participant={state.currentParticipant}
             team={state.currentTeam}
             canChangeParticipant={state.currentTeam.members.length > 1}
+            questionValue={state.currentQuestionValue}
             onChangeParticipant={handleChangeParticipant}
+            onChangeQuestionValue={handleSetQuestionValue}
             onMarkReady={handleMarkReady}
           />
         )}
@@ -431,6 +455,7 @@ export function OperatorPage() {
             team={state.currentTeam}
             question={state.currentQuestion}
             questionNumber={state.turns.length + (state.phase === 'question' ? 1 : 0)}
+            questionValue={state.currentQuestionValue}
             selectedOptionIndex={state.selectedOptionIndex}
             revealed={state.phase === 'revealed'}
             onSelectOption={index => dispatch({ type: 'SELECT_OPTION', index })}

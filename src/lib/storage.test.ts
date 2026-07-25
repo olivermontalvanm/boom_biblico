@@ -74,6 +74,22 @@ describe('scores', () => {
     expect(getScores()).toEqual([{ participantId: 'p1', teamId: 't1', correct: 1, incorrect: 1 }])
   })
 
+  it('adds the given points instead of 1 when a question is worth more', () => {
+    const scores = updateScore('p1', 't1', true, 3)
+    expect(scores).toEqual([{ participantId: 'p1', teamId: 't1', correct: 3, incorrect: 0 }])
+  })
+
+  it('accumulates points across multiple multiplied answers', () => {
+    updateScore('p1', 't1', true, 3)
+    updateScore('p1', 't1', true, 2)
+    expect(getScores()).toEqual([{ participantId: 'p1', teamId: 't1', correct: 5, incorrect: 0 }])
+  })
+
+  it('does not multiply incorrect answers', () => {
+    const scores = updateScore('p1', 't1', false, 3)
+    expect(scores).toEqual([{ participantId: 'p1', teamId: 't1', correct: 0, incorrect: 1 }])
+  })
+
   it('setScore creates a score with explicit values', () => {
     const scores = setScore('p1', 't1', 5, 2)
     expect(scores).toEqual([{ participantId: 'p1', teamId: 't1', correct: 5, incorrect: 2 }])

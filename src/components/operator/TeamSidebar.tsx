@@ -7,13 +7,18 @@ interface Props {
   todayChapters: number[]
   remainingQuestions: number | null
   lastTeamId: string | null
+  questionMultiplier: number
+  onChangeMultiplier: (value: number) => void
   onShowResults: () => void
   onFinishBook: () => void
 }
 
 const TEAM_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444']
 
-export function TeamSidebar({ teams, scores, bookName, todayChapters, remainingQuestions, lastTeamId, onShowResults, onFinishBook }: Props) {
+export function TeamSidebar({
+  teams, scores, bookName, todayChapters, remainingQuestions, lastTeamId,
+  questionMultiplier, onChangeMultiplier, onShowResults, onFinishBook,
+}: Props) {
   return (
     <div className="w-52 bg-[#1e1e2e] flex flex-col gap-3 p-4 shrink-0">
       <div>
@@ -34,6 +39,22 @@ export function TeamSidebar({ teams, scores, bookName, todayChapters, remainingQ
             {remainingQuestions} preg. disponible{remainingQuestions === 1 ? '' : 's'}
           </p>
         )}
+      </div>
+
+      <div className="h-px bg-gray-700" />
+
+      <div>
+        <label className="text-[10px] text-gray-500 uppercase tracking-widest">Multiplicador de preguntas</label>
+        <div className="flex items-center gap-2 mt-1">
+          <input
+            type="number"
+            min={1}
+            value={questionMultiplier}
+            onChange={e => onChangeMultiplier(Number(e.target.value) || 1)}
+            className="w-16 bg-[#2a2a3e] border border-gray-600 rounded px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-indigo-500"
+          />
+          <span className="text-xs text-gray-500">{questionMultiplier === 1 ? 'acierto c/u' : 'aciertos c/u'}</span>
+        </div>
       </div>
 
       <div className="h-px bg-gray-700" />
