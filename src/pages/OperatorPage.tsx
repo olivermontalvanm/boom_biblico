@@ -9,9 +9,10 @@ import { pickParticipant, pickQuestion } from '../lib/randomizer'
 import { SetupScreen } from '../components/operator/SetupScreen'
 import { TeamSidebar } from '../components/operator/TeamSidebar'
 import { ParticipantPanel } from '../components/operator/ParticipantPanel'
+import { CallingPanel } from '../components/operator/CallingPanel'
 import { QuestionPanel } from '../components/operator/QuestionPanel'
 
-type Phase = 'setup' | 'idle' | 'question' | 'revealed'
+type Phase = 'setup' | 'idle' | 'calling' | 'question' | 'revealed'
 
 interface State {
   phase: Phase
@@ -31,6 +32,7 @@ type Action =
   | { type: 'SETUP_COMPLETE'; bookName: string; todayChapters: number[]; teams: Team[]; questions: Question[] }
   | { type: 'START_TURN'; team: Team; participant: Participant; question: Question }
   | { type: 'CHANGE_PARTICIPANT'; participant: Participant }
+  | { type: 'MARK_READY' }
   | { type: 'SELECT_OPTION'; index: number }
   | { type: 'CONFIRM_ANSWER'; turn: Turn; scores: Score[] }
   | { type: 'NEXT_TURN' }
@@ -57,9 +59,11 @@ function reducer(state: State, action: Action): State {
     case 'SETUP_COMPLETE':
       return { ...state, phase: 'idle', bookName: action.bookName, todayChapters: action.todayChapters, teams: action.teams, questions: action.questions }
     case 'START_TURN':
-      return { ...state, phase: 'question', currentTeam: action.team, currentParticipant: action.participant, currentQuestion: action.question, selectedOptionIndex: null }
+      return { ...state, phase: 'calling', currentTeam: action.team, currentParticipant: action.participant, currentQuestion: action.question, selectedOptionIndex: null }
     case 'CHANGE_PARTICIPANT':
       return { ...state, currentParticipant: action.participant, selectedOptionIndex: null }
+    case 'MARK_READY':
+      return { ...state, phase: 'question' }
     case 'SELECT_OPTION':
       return { ...state, selectedOptionIndex: action.index }
     case 'CONFIRM_ANSWER':
@@ -201,7 +205,19 @@ export function OperatorPage() {
     }
     setPendingTeam(null)
     dispatch({ type: 'START_TURN', team, participant, question })
-    senderRef.current?.send({ type: 'SHOW_QUESTION', participant, team, question, teams: state.teams })
+    senderRef.current?.send({ type: 'SHOW_PARTICIPANT', participant, team, teams: state.teams })
+  }
+
+  function handleMarkReady() {
+    if (!state.currentTeam || !state.currentParticipant || !state.currentQuestion) return
+    dispatch({ type: 'MARK_READY' })
+    senderRef.current?.send({
+      type: 'SHOW_QUESTION',
+      participant: state.currentParticipant,
+      team: state.currentTeam,
+      question: state.currentQuestion,
+      teams: state.teams,
+    })
   }
 
   function handleTeamSelect(team: Team) {
@@ -230,12 +246,12 @@ export function OperatorPage() {
   }
 
   function handleChangeParticipant() {
-    if (!state.currentTeam || !state.currentParticipant || !state.currentQuestion) return
+    if (!state.currentTeam || !state.currentParticipant) return
     const others = state.currentTeam.members.filter(m => m.id !== state.currentParticipant!.id)
     if (others.length === 0) return
     const newParticipant = pickParticipant(others, state.turns)
     dispatch({ type: 'CHANGE_PARTICIPANT', participant: newParticipant })
-    senderRef.current?.send({ type: 'SHOW_QUESTION', participant: newParticipant, team: state.currentTeam, question: state.currentQuestion, teams: state.teams })
+    senderRef.current?.send({ type: 'SHOW_PARTICIPANT', participant: newParticipant, team: state.currentTeam, teams: state.teams })
   }
 
   function handleNextTurn() {
@@ -371,6 +387,16 @@ export function OperatorPage() {
           </div>
         )}
 
+        {state.phase === 'calling' && state.currentParticipant && state.currentTeam && (
+          <CallingPanel
+            participant={state.currentParticipant}
+            team={state.currentTeam}
+            canChangeParticipant={state.currentTeam.members.length > 1}
+            onChangeParticipant={handleChangeParticipant}
+            onMarkReady={handleMarkReady}
+          />
+        )}
+
         {(state.phase === 'question' || state.phase === 'revealed') &&
           state.currentParticipant && state.currentTeam && state.currentQuestion && (
           <QuestionPanel
@@ -380,11 +406,9 @@ export function OperatorPage() {
             questionNumber={state.turns.length + (state.phase === 'question' ? 1 : 0)}
             selectedOptionIndex={state.selectedOptionIndex}
             revealed={state.phase === 'revealed'}
-            canChangeParticipant={state.currentTeam.members.length > 1}
             onSelectOption={index => dispatch({ type: 'SELECT_OPTION', index })}
             onConfirm={handleConfirmAnswer}
             onNextTurn={handleNextTurn}
-            onChangeParticipant={handleChangeParticipant}
           />
         )}
       </div>
