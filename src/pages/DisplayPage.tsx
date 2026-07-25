@@ -29,6 +29,8 @@ function reducer(state: DisplayState, event: DisplayEvent): DisplayState {
       return { view: 'result', correct: event.correct, selectedOptionIndex: event.selectedOptionIndex, correctOptionIndex: event.correctOptionIndex, participant: state.participant, team: state.team, question: state.question, value: state.value, scores: state.scores, teams: state.teams }
     case 'UPDATE_SCORES':
       return { ...state, scores: event.scores }
+    case 'UPDATE_TEAMS':
+      return { ...state, teams: event.teams }
     case 'SHOW_RESULTS':
       return { view: 'results', scores: event.scores, teams: event.teams }
     case 'SHOW_FINAL_SCORES':

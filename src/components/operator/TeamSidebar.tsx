@@ -10,6 +10,7 @@ interface Props {
   questionMultiplier: number
   onChangeMultiplier: (value: number) => void
   onShowResults: () => void
+  onEditTeams: () => void
   onFinishBook: () => void
 }
 
@@ -17,7 +18,7 @@ const TEAM_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444']
 
 export function TeamSidebar({
   teams, scores, bookName, todayChapters, remainingQuestions, lastTeamId,
-  questionMultiplier, onChangeMultiplier, onShowResults, onFinishBook,
+  questionMultiplier, onChangeMultiplier, onShowResults, onEditTeams, onFinishBook,
 }: Props) {
   return (
     <div className="w-52 bg-[#1e1e2e] flex flex-col gap-3 p-4 shrink-0">
@@ -79,6 +80,13 @@ export function TeamSidebar({
       })}
 
       <div className="flex-1" />
+
+      <button
+        onClick={onEditTeams}
+        className="bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-2 text-sm font-medium transition-colors"
+      >
+        ✏️ Editar equipos
+      </button>
 
       <button
         onClick={onShowResults}
