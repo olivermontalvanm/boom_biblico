@@ -169,6 +169,7 @@ function ResumePanel({
 export function OperatorPage() {
   const [state, dispatch] = useReducer(reducer, undefined, init)
   const senderRef = useRef<ReturnType<typeof createSender> | null>(null)
+  const [pendingTeam, setPendingTeam] = useState<Team | null>(null)
 
   useEffect(() => {
     const sender = createSender()
@@ -192,15 +193,19 @@ export function OperatorPage() {
     senderRef.current?.send({ type: 'IDLE' })
   }
 
-  function handleTeamSelect(team: Team) {
-    const participant = pickParticipant(team.members, state.turns)
+  function handleStartTurn(team: Team, participant: Participant) {
     const question = pickQuestion(state.questions, state.turns, state.todayChapters)
     if (!question) {
       alert('No hay más preguntas disponibles para los capítulos de hoy.')
       return
     }
+    setPendingTeam(null)
     dispatch({ type: 'START_TURN', team, participant, question })
     senderRef.current?.send({ type: 'SHOW_QUESTION', participant, team, question, teams: state.teams })
+  }
+
+  function handleTeamSelect(team: Team) {
+    handleStartTurn(team, pickParticipant(team.members, state.turns))
   }
 
   function handleConfirmAnswer() {
@@ -251,6 +256,10 @@ export function OperatorPage() {
 
   const displayParticipants = state.currentTeam?.members ?? state.teams.flatMap(t => t.members)
   const lastTeamId = state.turns.at(-1)?.teamId ?? null
+  const usedIds = new Set(state.turns.map(t => t.questionId))
+  const remainingQuestions = state.questions.length > 0
+    ? state.questions.filter(q => state.todayChapters.includes(q.chapter) && !usedIds.has(q.id)).length
+    : null
 
   return (
     <div className="h-screen bg-[#13131f] text-white flex overflow-hidden">
@@ -259,11 +268,26 @@ export function OperatorPage() {
         scores={state.scores}
         bookName={state.bookName}
         todayChapters={state.todayChapters}
+        remainingQuestions={remainingQuestions}
         lastTeamId={lastTeamId}
         onFinishBook={handleFinishBook}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex justify-end gap-2 px-4 py-2 border-b border-[#2a2a3e] shrink-0">
+          <button
+            onClick={() => window.open('/editor', '_blank')}
+            className="bg-gray-700 hover:bg-gray-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+          >
+            ✏️ Editor
+          </button>
+          <button
+            onClick={() => window.open('/display', '_blank')}
+            className="bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+          >
+            📺 Abrir pantalla
+          </button>
+        </div>
         {state.phase === 'idle' && (
           <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
             {state.questions.length === 0 ? (
@@ -273,6 +297,49 @@ export function OperatorPage() {
                 teams={state.teams}
                 onStart={handleResume}
               />
+            ) : pendingTeam ? (
+              <div className="flex flex-col items-center gap-5 w-full max-w-sm">
+                <div className="text-center">
+                  <p className="text-xs text-gray-500 uppercase tracking-widest">Equipo</p>
+                  <p className="text-white font-bold text-xl mt-0.5">{pendingTeam.name}</p>
+                  <p className="text-gray-400 text-sm mt-1">Selecciona un participante</p>
+                </div>
+
+                <div className="flex flex-col gap-2 w-full">
+                  {pendingTeam.members.map(member => {
+                    const turnCount = state.turns.filter(t => t.participantId === member.id).length
+                    return (
+                      <button
+                        key={member.id}
+                        onClick={() => handleStartTurn(pendingTeam, member)}
+                        className="flex items-center justify-between bg-[#2a2a3e] hover:bg-indigo-700 text-white px-4 py-3 rounded-xl transition-colors w-full"
+                      >
+                        <span className="font-medium">{member.name}</span>
+                        {turnCount > 0 && (
+                          <span className="text-xs text-gray-400 bg-gray-700 rounded-full px-2 py-0.5">
+                            {turnCount} {turnCount === 1 ? 'turno' : 'turnos'}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div className="flex gap-3 w-full pt-1">
+                  <button
+                    onClick={() => handleTeamSelect(pendingTeam)}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+                  >
+                    Aleatorio
+                  </button>
+                  <button
+                    onClick={() => setPendingTeam(null)}
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2.5 rounded-xl text-sm transition-colors"
+                  >
+                    Volver
+                  </button>
+                </div>
+              </div>
             ) : (
               <>
                 <p className="text-gray-400 text-lg">Selecciona el equipo que juega este turno</p>
@@ -280,7 +347,7 @@ export function OperatorPage() {
                   {state.teams.map(team => (
                     <button
                       key={team.id}
-                      onClick={() => handleTeamSelect(team)}
+                      onClick={() => setPendingTeam(team)}
                       className="relative bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-colors"
                     >
                       {team.name}
@@ -292,6 +359,13 @@ export function OperatorPage() {
                     </button>
                   ))}
                 </div>
+                {remainingQuestions !== null && (
+                  <p className={`text-sm font-medium ${remainingQuestions === 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                    {remainingQuestions === 0
+                      ? 'Sin preguntas disponibles para los capítulos de hoy'
+                      : `${remainingQuestions} pregunta${remainingQuestions === 1 ? '' : 's'} disponible${remainingQuestions === 1 ? '' : 's'}`}
+                  </p>
+                )}
               </>
             )}
           </div>

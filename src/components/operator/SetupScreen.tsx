@@ -101,9 +101,17 @@ export function SetupScreen({ onComplete }: Props) {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto flex flex-col gap-8">
-        <div>
-          <h1 className="text-3xl font-bold text-yellow-400">BOOM BÍBLICO</h1>
-          <p className="text-gray-400 mt-1">Configuración de nueva sesión</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-yellow-400">BOOM BÍBLICO</h1>
+            <p className="text-gray-400 mt-1">Configuración de nueva sesión</p>
+          </div>
+          <button
+            onClick={() => window.open('/editor', '_blank')}
+            className="bg-gray-700 hover:bg-gray-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors mt-1"
+          >
+            ✏️ Editor de preguntas
+          </button>
         </div>
 
         {error && (

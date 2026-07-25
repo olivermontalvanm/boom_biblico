@@ -5,13 +5,14 @@ interface Props {
   scores: Score[]
   bookName: string
   todayChapters: number[]
+  remainingQuestions: number | null
   lastTeamId: string | null
   onFinishBook: () => void
 }
 
 const TEAM_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444']
 
-export function TeamSidebar({ teams, scores, bookName, todayChapters, lastTeamId, onFinishBook }: Props) {
+export function TeamSidebar({ teams, scores, bookName, todayChapters, remainingQuestions, lastTeamId, onFinishBook }: Props) {
   return (
     <div className="w-52 bg-[#1e1e2e] flex flex-col gap-3 p-4 shrink-0">
       <div>
@@ -26,6 +27,11 @@ export function TeamSidebar({ teams, scores, bookName, todayChapters, lastTeamId
               ))}
             </div>
           </>
+        )}
+        {remainingQuestions !== null && (
+          <p className={`text-xs mt-1 ${remainingQuestions === 0 ? 'text-red-400' : 'text-gray-500'}`}>
+            {remainingQuestions} preg. disponible{remainingQuestions === 1 ? '' : 's'}
+          </p>
         )}
       </div>
 
