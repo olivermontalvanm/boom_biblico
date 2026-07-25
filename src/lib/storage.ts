@@ -58,6 +58,19 @@ export function updateScore(participantId: string, teamId: string, correct: bool
   return scores
 }
 
+export function setScore(participantId: string, teamId: string, correct: number, incorrect: number): Score[] {
+  const scores = getScores()
+  const existing = scores.find(s => s.participantId === participantId)
+  if (existing) {
+    existing.correct = correct
+    existing.incorrect = incorrect
+  } else {
+    scores.push({ participantId, teamId, correct, incorrect })
+  }
+  saveScores(scores)
+  return scores
+}
+
 export function clearAll(): void {
   Object.values(KEYS).forEach(k => localStorage.removeItem(k))
 }

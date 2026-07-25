@@ -5,6 +5,7 @@ import { IdleScreen } from '../components/display/IdleScreen'
 import { CallingView } from '../components/display/CallingView'
 import { QuestionView } from '../components/display/QuestionView'
 import { ResultView } from '../components/display/ResultView'
+import { ResultsBoard } from '../components/display/ResultsBoard'
 import { Scoreboard } from '../components/display/Scoreboard'
 
 type DisplayState =
@@ -12,6 +13,7 @@ type DisplayState =
   | { view: 'calling'; participant: Participant; team: Team; scores: Score[]; teams: Team[] }
   | { view: 'question'; participant: Participant; team: Team; question: Question; scores: Score[]; teams: Team[] }
   | { view: 'result'; correct: boolean; selectedOptionIndex: number; correctOptionIndex: number; participant: Participant; team: Team; question: Question; scores: Score[]; teams: Team[] }
+  | { view: 'results'; scores: Score[]; teams: Team[] }
   | { view: 'final'; scores: Score[]; teams: Team[] }
 
 function reducer(state: DisplayState, event: DisplayEvent): DisplayState {
@@ -27,6 +29,8 @@ function reducer(state: DisplayState, event: DisplayEvent): DisplayState {
       return { view: 'result', correct: event.correct, selectedOptionIndex: event.selectedOptionIndex, correctOptionIndex: event.correctOptionIndex, participant: state.participant, team: state.team, question: state.question, scores: state.scores, teams: state.teams }
     case 'UPDATE_SCORES':
       return { ...state, scores: event.scores }
+    case 'SHOW_RESULTS':
+      return { view: 'results', scores: event.scores, teams: event.teams }
     case 'SHOW_FINAL_SCORES':
       return { view: 'final', scores: event.scores, teams: event.teams }
     default:
@@ -98,69 +102,12 @@ export function DisplayPage() {
             team={displayed.team}
           />
         )}
-        {displayed.view === 'final' && (() => {
-          const MEDALS = [
-            { emoji: '🥇', border: 'border-yellow-400', score: 'text-yellow-300', size: 'text-7xl px-14 py-10' },
-            { emoji: '🥈', border: 'border-slate-300',  score: 'text-slate-200',  size: 'text-6xl px-12 py-8'  },
-            { emoji: '🥉', border: 'border-amber-600',  score: 'text-amber-400',  size: 'text-6xl px-12 py-8'  },
-          ]
-          const ranked = [...displayed.teams]
-            .map(team => ({
-              team,
-              total: displayed.scores.filter(s => s.teamId === team.id).reduce((sum, s) => sum + s.correct, 0),
-            }))
-            .sort((a, b) => b.total - a.total)
-
-          return (
-            <div className="flex-1 flex flex-col items-center justify-center gap-10">
-              <h2 className="text-5xl font-bold text-yellow-400">Resultados Finales</h2>
-              <div className="flex gap-6 flex-wrap justify-center items-end">
-                {ranked.map(({ team, total }, rank) => {
-                  const medal = MEDALS[rank]
-                  return (
-                    <div
-                      key={team.id}
-                      className={`bg-[#1e1e3a] border-2 rounded-2xl text-center flex flex-col items-center gap-1
-                        ${medal ? `${medal.border} ${medal.size}` : 'border-gray-700 text-5xl px-10 py-7'}`}
-                    >
-                      {medal
-                        ? <span className="text-5xl leading-none mb-1">{medal.emoji}</span>
-                        : <span className="text-gray-600 text-xl font-bold mb-1">{rank + 1}°</span>
-                      }
-                      <p className="text-gray-300 text-xl font-semibold">{team.name}</p>
-                      <p className={`font-bold mt-1 ${medal ? medal.score : 'text-white text-5xl'}`}>{total}</p>
-
-                      {(() => {
-                        const TOP_ICONS = ['🥇', '🥈', '🥉']
-                        const topPlayers = team.members
-                          .map(m => ({
-                            name: m.name,
-                            correct: displayed.scores.find(s => s.participantId === m.id)?.correct ?? 0,
-                          }))
-                          .filter(p => p.correct > 0)
-                          .sort((a, b) => b.correct - a.correct)
-                          .slice(0, 3)
-
-                        if (topPlayers.length === 0) return null
-                        return (
-                          <div className="mt-3 pt-3 border-t border-white/10 w-full flex flex-col gap-1.5">
-                            {topPlayers.map((p, i) => (
-                              <div key={i} className="flex items-center justify-between gap-4 text-sm">
-                                <span className="text-base leading-none">{TOP_ICONS[i]}</span>
-                                <span className="text-gray-300 flex-1 text-left truncate">{p.name}</span>
-                                <span className="text-white font-semibold tabular-nums">{p.correct}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )
-                      })()}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })()}
+        {displayed.view === 'results' && (
+          <ResultsBoard title="Resultados hasta el momento" teams={displayed.teams} scores={displayed.scores} />
+        )}
+        {displayed.view === 'final' && (
+          <ResultsBoard title="Resultados Finales" teams={displayed.teams} scores={displayed.scores} />
+        )}
       </div>
 
       {state.teams.length > 0 && <Scoreboard scores={state.scores} teams={state.teams} />}

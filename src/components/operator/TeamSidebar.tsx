@@ -7,12 +7,13 @@ interface Props {
   todayChapters: number[]
   remainingQuestions: number | null
   lastTeamId: string | null
+  onShowResults: () => void
   onFinishBook: () => void
 }
 
 const TEAM_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444']
 
-export function TeamSidebar({ teams, scores, bookName, todayChapters, remainingQuestions, lastTeamId, onFinishBook }: Props) {
+export function TeamSidebar({ teams, scores, bookName, todayChapters, remainingQuestions, lastTeamId, onShowResults, onFinishBook }: Props) {
   return (
     <div className="w-52 bg-[#1e1e2e] flex flex-col gap-3 p-4 shrink-0">
       <div>
@@ -57,6 +58,13 @@ export function TeamSidebar({ teams, scores, bookName, todayChapters, remainingQ
       })}
 
       <div className="flex-1" />
+
+      <button
+        onClick={onShowResults}
+        className="bg-indigo-700 hover:bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium transition-colors"
+      >
+        📊 Ver resultados
+      </button>
 
       <button
         onClick={onFinishBook}
