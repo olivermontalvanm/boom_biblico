@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
 import type { DisplayEvent, Participant, Team, Question, Score } from '../lib/types'
 import { createReceiver } from '../lib/broadcast'
+import { unlockAudio } from '../lib/sound'
 import { IdleScreen } from '../components/display/IdleScreen'
 import { CallingView } from '../components/display/CallingView'
 import { QuestionView } from '../components/display/QuestionView'
@@ -51,6 +52,16 @@ export function DisplayPage() {
   useEffect(() => {
     const receiver = createReceiver(dispatch)
     return () => receiver.close()
+  }, [])
+
+  useEffect(() => {
+    // Browsers block audio until a user gesture on this page; unlock on the first click/keypress.
+    window.addEventListener('pointerdown', unlockAudio, { once: true })
+    window.addEventListener('keydown', unlockAudio, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', unlockAudio)
+      window.removeEventListener('keydown', unlockAudio)
+    }
   }, [])
 
   useEffect(() => {
