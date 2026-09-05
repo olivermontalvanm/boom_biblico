@@ -7,6 +7,7 @@ import {
 } from '../lib/storage'
 import { pickParticipant, pickQuestion } from '../lib/randomizer'
 import { moveParticipantToTeam, moveScoreToTeam } from '../lib/teams'
+import { presentMembers } from '../lib/attendance'
 import { SetupScreen } from '../components/operator/SetupScreen'
 import { TeamSidebar } from '../components/operator/TeamSidebar'
 import { ParticipantPanel } from '../components/operator/ParticipantPanel'
@@ -14,8 +15,9 @@ import { CallingPanel } from '../components/operator/CallingPanel'
 import { QuestionPanel } from '../components/operator/QuestionPanel'
 import { ResultsPanel } from '../components/operator/ResultsPanel'
 import { TeamsEditPanel } from '../components/operator/TeamsEditPanel'
+import { AttendancePanel } from '../components/operator/AttendancePanel'
 
-type Phase = 'setup' | 'idle' | 'calling' | 'question' | 'revealed' | 'results' | 'teams'
+type Phase = 'setup' | 'idle' | 'calling' | 'question' | 'revealed' | 'results' | 'teams' | 'attendance'
 
 interface State {
   phase: Phase
@@ -50,6 +52,8 @@ type Action =
   | { type: 'SHOW_TEAMS' }
   | { type: 'HIDE_TEAMS' }
   | { type: 'UPDATE_TEAMS'; teams: Team[] }
+  | { type: 'SHOW_ATTENDANCE' }
+  | { type: 'HIDE_ATTENDANCE' }
 
 function init(): State {
   const session = getSession()
@@ -104,6 +108,10 @@ function reducer(state: State, action: Action): State {
       return { ...state, phase: 'idle' }
     case 'UPDATE_TEAMS':
       return { ...state, teams: action.teams }
+    case 'SHOW_ATTENDANCE':
+      return { ...state, phase: 'attendance' }
+    case 'HIDE_ATTENDANCE':
+      return { ...state, phase: 'idle' }
     default:
       return state
   }
@@ -262,7 +270,12 @@ export function OperatorPage() {
   }
 
   function handleTeamSelect(team: Team) {
-    handleStartTurn(team, pickParticipant(team.members, state.turns))
+    const present = presentMembers(team)
+    if (present.length === 0) {
+      alert('No hay participantes presentes en este equipo.')
+      return
+    }
+    handleStartTurn(team, pickParticipant(present, state.turns))
   }
 
   function handleConfirmAnswer() {
@@ -288,7 +301,7 @@ export function OperatorPage() {
 
   function handleChangeParticipant() {
     if (!state.currentTeam || !state.currentParticipant) return
-    const others = state.currentTeam.members.filter(m => m.id !== state.currentParticipant!.id)
+    const others = presentMembers(state.currentTeam).filter(m => m.id !== state.currentParticipant!.id)
     if (others.length === 0) return
     const newParticipant = pickParticipant(others, state.turns)
     dispatch({ type: 'CHANGE_PARTICIPANT', participant: newParticipant })
@@ -337,6 +350,14 @@ export function OperatorPage() {
     senderRef.current?.send({ type: 'UPDATE_TEAMS', teams: newTeams })
   }
 
+  function handleShowAttendance() {
+    dispatch({ type: 'SHOW_ATTENDANCE' })
+  }
+
+  function handleHideAttendance() {
+    dispatch({ type: 'HIDE_ATTENDANCE' })
+  }
+
   function handleMoveParticipant(participantId: string, toTeamId: string) {
     const newTeams = moveParticipantToTeam(state.teams, participantId, toTeamId)
     const newScores = moveScoreToTeam(state.scores, participantId, toTeamId)
@@ -354,6 +375,8 @@ export function OperatorPage() {
 
   const displayParticipants = state.currentTeam?.members ?? state.teams.flatMap(t => t.members)
   const lastTeamId = state.turns.at(-1)?.teamId ?? null
+  const pendingPresentMembers = pendingTeam ? presentMembers(pendingTeam) : []
+  const pendingAbsentCount = pendingTeam ? pendingTeam.members.length - pendingPresentMembers.length : 0
   const usedIds = new Set(state.turns.map(t => t.questionId))
   const remainingQuestions = state.questions.length > 0
     ? state.questions.filter(q => state.todayChapters.includes(q.chapter) && !usedIds.has(q.id)).length
@@ -372,6 +395,7 @@ export function OperatorPage() {
         onChangeMultiplier={handleSetMultiplier}
         onShowResults={handleShowResults}
         onEditTeams={handleShowTeams}
+        onShowAttendance={handleShowAttendance}
         onFinishBook={handleFinishBook}
       />
 
@@ -405,32 +429,42 @@ export function OperatorPage() {
                   <p className="text-xs text-gray-500 uppercase tracking-widest">Equipo</p>
                   <p className="text-white font-bold text-xl mt-0.5">{pendingTeam.name}</p>
                   <p className="text-gray-400 text-sm mt-1">Selecciona un participante</p>
+                  {pendingAbsentCount > 0 && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      {pendingAbsentCount} {pendingAbsentCount === 1 ? 'ausente' : 'ausentes'}
+                    </p>
+                  )}
                 </div>
 
-                <div className="flex flex-col gap-2 w-full max-h-[50vh] overflow-y-auto pr-1">
-                  {pendingTeam.members.map(member => {
-                    const turnCount = state.turns.filter(t => t.participantId === member.id).length
-                    return (
-                      <button
-                        key={member.id}
-                        onClick={() => handleStartTurn(pendingTeam, member)}
-                        className="flex items-center justify-between bg-[#2a2a3e] hover:bg-indigo-700 text-white px-4 py-3 rounded-xl transition-colors w-full"
-                      >
-                        <span className="font-medium">{member.name}</span>
-                        {turnCount > 0 && (
-                          <span className="text-xs text-gray-400 bg-gray-700 rounded-full px-2 py-0.5">
-                            {turnCount} {turnCount === 1 ? 'turno' : 'turnos'}
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
+                {pendingPresentMembers.length === 0 ? (
+                  <p className="text-red-400 text-sm text-center">No hay participantes presentes en este equipo.</p>
+                ) : (
+                  <div className="flex flex-col gap-2 w-full max-h-[50vh] overflow-y-auto pr-1">
+                    {pendingPresentMembers.map(member => {
+                      const turnCount = state.turns.filter(t => t.participantId === member.id).length
+                      return (
+                        <button
+                          key={member.id}
+                          onClick={() => handleStartTurn(pendingTeam, member)}
+                          className="flex items-center justify-between bg-[#2a2a3e] hover:bg-indigo-700 text-white px-4 py-3 rounded-xl transition-colors w-full"
+                        >
+                          <span className="font-medium">{member.name}</span>
+                          {turnCount > 0 && (
+                            <span className="text-xs text-gray-400 bg-gray-700 rounded-full px-2 py-0.5">
+                              {turnCount} {turnCount === 1 ? 'turno' : 'turnos'}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
 
                 <div className="flex gap-3 w-full pt-1">
                   <button
                     onClick={() => handleTeamSelect(pendingTeam)}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+                    disabled={pendingPresentMembers.length === 0}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
                   >
                     Aleatorio
                   </button>
@@ -517,6 +551,14 @@ export function OperatorPage() {
             onUpdateTeams={handleUpdateTeams}
             onMoveParticipant={handleMoveParticipant}
             onClose={handleHideTeams}
+          />
+        )}
+
+        {state.phase === 'attendance' && (
+          <AttendancePanel
+            teams={state.teams}
+            onUpdateTeams={handleUpdateTeams}
+            onClose={handleHideAttendance}
           />
         )}
       </div>

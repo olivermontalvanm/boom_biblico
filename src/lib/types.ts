@@ -10,6 +10,7 @@ export interface Participant {
   id: string;
   name: string;
   teamId: string;
+  present?: boolean;
 }
 
 export interface Team {

@@ -1,4 +1,5 @@
 import type { Team, Score } from '../../lib/types'
+import { isPresent } from '../../lib/attendance'
 
 interface Props {
   teams: Team[]
@@ -11,6 +12,7 @@ interface Props {
   onChangeMultiplier: (value: number) => void
   onShowResults: () => void
   onEditTeams: () => void
+  onShowAttendance: () => void
   onFinishBook: () => void
 }
 
@@ -18,7 +20,7 @@ const TEAM_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444']
 
 export function TeamSidebar({
   teams, scores, bookName, todayChapters, remainingQuestions, lastTeamId,
-  questionMultiplier, onChangeMultiplier, onShowResults, onEditTeams, onFinishBook,
+  questionMultiplier, onChangeMultiplier, onShowResults, onEditTeams, onShowAttendance, onFinishBook,
 }: Props) {
   return (
     <div className="w-52 bg-[#1e1e2e] flex flex-col gap-3 p-4 shrink-0">
@@ -64,6 +66,7 @@ export function TeamSidebar({
 
       {teams.map((team, i) => {
         const total = scores.filter(s => s.teamId === team.id).reduce((sum, s) => sum + s.correct, 0)
+        const presentCount = team.members.filter(isPresent).length
         const color = TEAM_COLORS[i % TEAM_COLORS.length]
         const isLast = team.id === lastTeamId
         return (
@@ -74,12 +77,24 @@ export function TeamSidebar({
                 <span className="text-[9px] bg-gray-600 text-gray-300 rounded px-1.5 py-0.5 shrink-0">último</span>
               )}
             </div>
-            <p className="text-xs mt-1" style={{ color }}>Puntaje: <strong>{total}</strong></p>
+            <div className="flex items-center justify-between gap-1 mt-1">
+              <p className="text-xs" style={{ color }}>Puntaje: <strong>{total}</strong></p>
+              <p className={`text-[10px] ${presentCount < team.members.length ? 'text-yellow-500' : 'text-gray-500'}`}>
+                {presentCount}/{team.members.length} presentes
+              </p>
+            </div>
           </div>
         )
       })}
 
       <div className="flex-1" />
+
+      <button
+        onClick={onShowAttendance}
+        className="bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-2 text-sm font-medium transition-colors"
+      >
+        🧑‍🤝‍🧑 Asistencia
+      </button>
 
       <button
         onClick={onEditTeams}
