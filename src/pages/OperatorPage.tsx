@@ -407,7 +407,7 @@ export function OperatorPage() {
                   <p className="text-gray-400 text-sm mt-1">Selecciona un participante</p>
                 </div>
 
-                <div className="flex flex-col gap-2 w-full">
+                <div className="flex flex-col gap-2 w-full max-h-[50vh] overflow-y-auto pr-1">
                   {pendingTeam.members.map(member => {
                     const turnCount = state.turns.filter(t => t.participantId === member.id).length
                     return (
